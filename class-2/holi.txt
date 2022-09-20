@@ -1,0 +1,18 @@
+SQL> SELECT to_char(sysdate)
+
+ERROR at line 2:
+ORA-00923: FROM keyword not found where expected
+SQL> SELECT to_char(sysdate, 'DD Month YYYY Day HH:MI:SS Am')
+
+ERROR at line 2:
+ORA-00923: FROM keyword not found where expected
+SQL> to_char(SYSDATE, 'DD Month YYYY Day HH:MI:SS Am')
+ERROR at line 2:
+unknown command "to_char(S..." - rest of line ignored.
+SQL> SELECT to_char(SYSDATE, 'DD Month YYYY Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYYYYDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                                         14 September 2022 Wednesday 09:50:37 Pm
+

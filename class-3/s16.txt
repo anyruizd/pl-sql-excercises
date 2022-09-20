@@ -1,0 +1,74 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            16 September Twenty Twenty-Two Friday    04:01:32 Pm
+
+SQL> CREATE OR REPLACE FUNCTION f_sum (p_num1_in IN NUMBER, p_num2_in IN NUMBER)
+  2  RETURN NUMBER AS
+  3  	v_num1_in NUMBER;
+  4  	v_num2_in NUMBER;
+  5  	v_result NUMBER;
+  6  BEGIN
+  7  	v_num1_in :=  p_num1_in;
+  8  	v_num2_in :=  p_num2_in;
+  9  	v_result := v_num1_in + v_num2_in;
+  10
+  11  	RETURN v_result;
+  12  END;
+  13  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> SELECT f_sum(1, 1) AS result FROM DUAL;
+
+    RESULT
+----------
+         2
+
+SQL> SELECT f_sum(1, 56) AS result FROM DUAL;
+
+    RESULT
+----------
+        57
+
+SQL> CREATE OR REPLACE FUNCTION f_sum (p_num1_in IN NUMBER, p_num2_in IN NUMBER)
+  2  RETURN NUMBER AS
+  3  	v_result NUMBER;
+  4  BEGIN
+  5  	v_result := p_num1_in + p_num2_in;
+  6  	RETURN v_result;
+  7  END;
+  8  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> SELECT f_sum(1, 1) AS result FROM DUAL;
+
+    RESULT
+----------
+         2
+
+SQL> CREATE OR REPLACE FUNCTION f_sum (p_num1_in IN NUMBER, p_num2_in IN NUMBER)
+  2  RETURN NUMBER AS
+  3
+  4  BEGIN
+  5  	RETURN p_num1_in + p_num2_in;
+  6  END;
+  7  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> SELECT f_sum(1, 3) AS result FROM DUAL;
+
+    RESULT
+----------
+         4
+
