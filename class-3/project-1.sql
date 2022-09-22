@@ -1,3 +1,6 @@
+SPOOL './project-1.txt'
+SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+FROM dual;
 -- Q1. Create a procedure that accept a number to display the triple of its 
 -- value to the screen as follow: The triple of ... is ...
 
@@ -95,8 +98,34 @@ Exec question_5 (2,3)
 -- temperature in Celsius to convert it into temperature in Fahrenheit. 
 -- Test your function at least 3 times with 3 different temperature.
 
+CREATE OR REPLACE FUNCTION question_6(p_num_in IN NUMBER)
+RETURN NUMBER AS
+	v_result NUMBER;
+BEGIN
+	v_result := (9/5)*p_num_in + 32;
+	RETURN v_result;
+END;
+/
 
+SELECT question_6(0) AS result FROM DUAL;
+SELECT question_6(25) AS result FROM DUAL;
+SELECT question_6(-15) AS result FROM DUAL;
 
 -- Q7. Use the formula of question 3, create a function that accepts the
 -- temperature in Fahrenheit to convert it into temperature in Celsius.
 -- Test your function at least 3 times with 3 different temperatures.
+
+CREATE OR REPLACE FUNCTION question_7(p_num_in IN NUMBER)
+RETURN NUMBER AS
+	v_result NUMBER;
+BEGIN
+	v_result := (5/9)*(p_num_in - 32);
+	RETURN v_result;
+END;
+/
+
+SELECT question_7(32) AS result FROM DUAL;
+SELECT question_7(77) AS result FROM DUAL;
+SELECT question_7(5)  AS result FROM DUAL;
+
+SPOOL OFF;

@@ -1,0 +1,253 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            20 September Twenty Twenty-Two Tuesday   11:14:23 Pm
+
+SQL> -- Q1. Create a procedure that accept a number to display the triple of its 
+SQL> -- value to the screen as follow: The triple of ... is ...
+SQL> CREATE OR REPLACE PROCEDURE question_1(p_num_in IN NUMBER) AS
+  2  BEGIN
+  3      DBMS_OUTPUT.PUT_LINE('The triple of ' || p_num_in || ' is ' || p_num_in*3 );
+  4  END;
+  5  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> Exec question_1 (2)
+
+The triple of 2 is 6                                                            
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> Exec question_1 (3)
+
+The triple of 3 is 9                                                            
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Q2. Create a procedure that accepts a number which represent the temperature
+SQL> -- in Celsius. The procedure will convert the temperature into Fahrenheit using
+SQL> -- the following formula: Tf = (9/5) * Tc + 32
+SQL> -- Then display the following: ... degree in C is equivalent to ... in F
+SQL> CREATE OR REPLACE PROCEDURE question_2(p_num_in IN NUMBER) AS
+  2      v_result NUMBER;
+  3  BEGIN
+  4      v_result := (9/5)*p_num_in + 32;
+  5      DBMS_OUTPUT.PUT_LINE(p_num_in || ' degrees in C is equivalent to ' || v_result || ' in F' );
+  6  END;
+  7  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> Exec question_2 (0)
+
+0 degrees in C is equivalent to 32 in F                                         
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> Exec question_2 (25)
+
+25 degrees in C is equivalent to 77 in F                                        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> Exec question_2 (-15)
+
+-15 degrees in C is equivalent to 5 in F                                        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Q3. Create a procedure that accept a number which represent the temperature 
+SQL> -- in Fahrenheit. The procedure will convert the temperature into Celsius using
+SQL> -- the following formula: Tc = (5/9) * (Tf - 32) 
+SQL> -- Then display the following: ... degree in F is equivalent to ... in C
+SQL> CREATE OR REPLACE PROCEDURE question_3(p_num_in IN NUMBER) AS
+  2      v_result NUMBER;
+  3  BEGIN
+  4      v_result := (5/9)*(p_num_in - 32);
+  5      DBMS_OUTPUT.PUT_LINE(p_num_in || ' degrees in F is equivalent to ' || v_result || ' in C' );
+  6  END;
+  7  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> Exec question_3 (32)
+
+32 degrees in F is equivalent to 0 in C                                         
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> Exec question_3 (77)
+
+77 degrees in F is equivalent to 25 in C                                        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> Exec question_3 (5)
+
+5 degrees in F is equivalent to -15 in C                                        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Q4. Create a procedure that accepts a number used to calculate the 5% GST, 
+SQL> -- 9.98 % QST, the total of the 2 tax, the grand total, and to display 
+SQL> -- EVERYTHING to the screen as follow: 
+SQL> -- For the price of $...
+SQL> -- You will have to pay $... GST 
+SQL> -- $ ... QST for a total of $... 
+SQL> -- The GRAND TOTAL is $ ...
+SQL> CREATE OR REPLACE PROCEDURE question_4(price IN NUMBER) AS
+  2      v_total NUMBER;
+  3      v_gst NUMBER;
+  4      v_qst NUMBER;
+  5      v_subtotal NUMBER;
+  6  BEGIN
+  7      v_gst := price*0.05;
+  8      v_qst := price*0.0998;
+  9      v_subtotal := v_gst + v_qst;
+  10      v_total := price + v_subtotal;
+  11      DBMS_OUTPUT.PUT_LINE('For the price of $' || price);
+  12      DBMS_OUTPUT.PUT_LINE('You will have to pay $' || v_gst || ' GST');
+  13      DBMS_OUTPUT.PUT_LINE('$' || v_qst || ' QST for a total of $' || v_subtotal );
+  14      DBMS_OUTPUT.PUT_LINE('The GRAND TOTAL is $' || v_total );
+  15  END;
+  16  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> Exec question_4 (100)
+
+For the price of $100                                                           
+You will have to pay $5 GST                                                     
+$9.98 QST for a total of $14.98                                                 
+The GRAND TOTAL is $114.98                                                      
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Q5. Create a procedure that accepts 2 numbers represented the width and 
+SQL> -- height of a rectangular shape. The procedure will calculate the area and 
+SQL> -- the perimeter using the following formula:
+SQL> -- Area = Width X Height
+SQL> -- Perimeter = (Width + Height) X 2
+SQL> -- display EVERYTHING to the screen as follow: 
+SQL> -- The area of a ... by ... is .... It's parameter is ...
+SQL> CREATE OR REPLACE PROCEDURE question_5(width IN NUMBER, height IN NUMBER) AS
+  2      area NUMBER;
+  3      perimeter NUMBER;
+  4  BEGIN
+  5      area := width * height;
+  6      perimeter := (width + height) * 2;
+  7      DBMS_OUTPUT.PUT_LINE('The area of a ' || width || ' by ' || height || ' is ' || area || '. Its perimeter is ' || perimeter);
+  8  END;
+  9  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> Exec question_5 (2,3)
+
+The area of a 2 by 3 is 6. Its perimeter is 10                                  
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Q6. Use the formula of question 2, create a function that accepts the 
+SQL> -- temperature in Celsius to convert it into temperature in Fahrenheit. 
+SQL> -- Test your function at least 3 times with 3 different temperature.
+SQL> CREATE OR REPLACE FUNCTION question_6(p_num_in IN NUMBER)
+  2  RETURN NUMBER AS
+  3  	v_result NUMBER;
+  4  BEGIN
+  5  	v_result := (9/5)*p_num_in + 32;
+  6  	RETURN v_result;
+  7  END;
+  8  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> SELECT question_6(0) AS result FROM DUAL;
+
+    RESULT
+----------
+        32
+
+SQL> SELECT question_6(25) AS result FROM DUAL;
+
+    RESULT
+----------
+        77
+
+SQL> SELECT question_6(-15) AS result FROM DUAL;
+
+    RESULT
+----------
+         5
+
+SQL> -- Q7. Use the formula of question 3, create a function that accepts the
+SQL> -- temperature in Fahrenheit to convert it into temperature in Celsius.
+SQL> -- Test your function at least 3 times with 3 different temperatures.
+SQL> CREATE OR REPLACE FUNCTION question_7(p_num_in IN NUMBER)
+  2  RETURN NUMBER AS
+  3  	v_result NUMBER;
+  4  BEGIN
+  5  	v_result := (5/9)*(p_num_in - 32);
+  6  	RETURN v_result;
+  7  END;
+  8  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> SELECT question_7(32) AS result FROM DUAL;
+
+    RESULT
+----------
+         0
+
+SQL> SELECT question_7(77) AS result FROM DUAL;
+
+    RESULT
+----------
+        25
+
+SQL> SELECT question_7(5)  AS result FROM DUAL;
+
+    RESULT
+----------
+       -15
+
+SQL> SPOOL OFF;
+
