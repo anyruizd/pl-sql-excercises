@@ -1,0 +1,36 @@
+-- Procedure that accepts an employee number and a job, the procedure will 
+-- update the employee with the new job if the employee existed otherwise
+-- insert Oleksandr witha a default salary of $1. Pront out the following:
+
+-- Employee X is Y. He is a Z earning $M a month !
+-- Where X is the empno, Y is the ename, Z is job and M is the salary
+
+
+CREATE OR REPLACE PROCEDURE P_S28_EMPLOYEE(P_EMPNO NUMBER, P_JOB VARCHAR2) AS
+    V_ENAME EMP.ENAME%TYPE;
+    V_SAL EMP.SAL%TYPE;
+BEGIN
+    SELECT ENAME, SAL
+    INTO V_ENAME, V_SAL
+    FROM EMP
+    WHERE EMPNO = P_EMPNO;
+
+    DBMS_OUTPUT.PUT_LINE('EMPLOYEE NUMBER ' || P_EMPNO || ' FOUND, UPDATE NEEDED!');
+    UPDATE EMP SET JOB = P_JOB WHERE EMPNO = P_EMPNO;
+    DBMS_OUTPUT.PUT_LINE('EMPLOYEE NUMBER ' || P_EMPNO || ' UPDATED!');
+    DBMS_OUTPUT.PUT_LINE('EMPLOYEE NUMBER ' || P_EMPNO || ' IS ' || V_ENAME || '. THEY AARE A ' || P_JOB || ' EARNING $' || V_SAL || ' A MONTH !');
+  
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+        INSERT INTO EMP(EMPNO, ENAME, SAL, JOB)
+        VALUES(P_EMPNO, 'OLEKSANDR', 1, P_JOB);
+        DBMS_OUTPUT.PUT_LINE('EMPLOYEE NUMBER ' || P_EMPNO || ' INSERTED !');
+        DBMS_OUTPUT.PUT_LINE('EMPLOYEE NUMBER ' || P_EMPNO || ' IS OLEKSANDR. HE IS A ' || P_JOB || ' EARNING $1 A MONTH !');
+END;
+/
+
+SET SERVEROUTPUT ON
+
+EXEC P_S28_EMPLOYEE(7369, 'CLERK')
+EXEC P_S28_EMPLOYEE(1234, 'CLERK')
+EXEC P_S28_EMPLOYEE(7839, 'CLEANER')

@@ -1,0 +1,92 @@
+-- Select in PL/SQL
+-- SELECT column1, column2, ...
+-- INTo var1, var2, ....
+-- FROM Nname_of_table
+-- [ WHERE condition ];
+
+-- Ex 1. Create a procedure that accepts an employee number
+-- to display his name and salary on the screen as follow:
+-- Employee number X is Y earning $Z a month ! using the scott schema
+-- schema is a collection of tables, procedures, functions
+SET SERVEROUTPUT ON
+CREATE OR REPLACE PROCEDURE p_s23_ex1(p_empno IN NUMBER) AS
+-- v_ename VARCHAR2(10); this way is not maintenable because if the 
+-- type changes in the table, the procedure won't work anymore
+v_ename emp.ename%type; -- this way costs more because it has to go to the table each time and look for the data type
+v_sal emp.sal%type;
+BEGIN
+    SELECT ename, sal
+    INTO v_ename, v_sal
+    FROM emp
+    WHERE empno = p_empno;
+
+    DBMS_OUTPUT.PUT_LINE('Employee number ' || p_empno || ' is ' || v_ename || ' earning $' || v_sal || ' a month !');
+    -- we need an exception handler: a predefined exception
+    EXCEPTION
+        WHEN TOO_MANY_ROWS THEN
+            DBMS_OUTPUT.PUT_LINE(
+                'Our slect returns more than 1 row my friend Riya!');
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE(
+                'Employee number ' || p_empno || ' does not exist my friend Riya!');
+END;
+/
+-- desc emp -> descibes the table employee
+-- desc emp
+
+exec p_s23_ex1(7369)
+exec p_s23_ex1(7654)
+exec p_s23_ex1(8888)
+
+select EMPNO, ename from EMP
+
+-- Ex2. Create a procedure that accepts an employee number to calculate and display his or her new salarie
+-- using the scale below:
+
+-- CLERK 25% increase in salary
+-- ANALYST 20% increase in salary
+-- SALESMAN 15% increase
+-- MANAGER 10% increase
+-- PRESIDENT 5% increase 
+
+
+CREATE OR REPLACE PROCEDURE p_update_sal(p_empno emp.empno%TYPE) AS
+    v_ename emp.ENAME%TYPE;
+    v_sal emp.SAL%TYPE;
+    v_new_sal emp.SAL%TYPE;
+    V_JOB EMP.JOB%TYPE;
+BEGIN
+    SELECT ename, sal, JOB
+    INTO v_ename, v_sal, V_JOB
+    FROM emp
+    WHERE empno = p_empno; -- this is a primary key so we won;t have too many rows
+
+    DBMS_OUTPUT.PUT_LINE('EMPLOYEE NUMBER ' || P_EMPNO || ' FOUND! ');
+        IF V_JOB = 'CLERK' THEN
+            V_NEW_SAL := V_SAL + V_SAL * 25/100;
+        ELSIF V_JOB = 'ANALYST' THEN
+            V_NEW_SAL := V_SAL + V_SAL * 23/100;
+        ELSIF V_JOB = 'SALESMAN' THEN
+            V_NEW_SAL := V_SAL + V_SAL * 15/100;
+        ELSIF V_JOB = 'MANAGER' THEN
+            V_NEW_SAL := V_SAL + V_SAL * 10/100;
+        ELSIF V_JOB = 'PRESIDENT' THEN
+            V_NEW_SAL := V_SAL + V_SAL * 5/100;
+        END IF;
+    DBMS_OUTPUT.PUT_LINE('EMPLOYEE NUMBER ' || P_EMPNO || ' IS '
+        || V_ENAME || '. THEIR JOB IS ' || V_JOB || '. OLD SALARY IS $'
+        || V_SAL || '. NEW SALARY: $' || V_NEW_SAL);
+
+    UPDATE EMP SET SAL = V_NEW_SAL WHERE EMPNO = P_EMPNO;
+    COMMIT;
+    
+    DBMS_OUTPUT.PUT_LINE('EMPLOYEE NUMBER ' || P_EMPNO || ' UPDATED!');
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('EMPLOYEE NUMBER ' || P_EMPNO || ' DOES NOT EXIST MY FRIEND RIYA! ');
+END;
+/
+
+EXEC p_update_sal(7369)
+
+SELECT EMPNO, ENAME, JOB, SAL FROM EMP;

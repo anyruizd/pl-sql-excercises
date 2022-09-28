@@ -1,0 +1,400 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            28 September Twenty Twenty-Two Wednesday 11:36:41 Pm
+
+SQL> CREATE OR REPLACE FUNCTION l2_q1 (p1 IN NUMBER, p2 IN NUMBER)
+  2  RETURN NUMBER AS
+  3  BEGIN
+  4  	RETURN p1*p2;
+  5  END;
+  6  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> SELECT l2_q1(3, 1) AS result FROM DUAL;
+
+    RESULT
+----------
+         3
+
+SQL> CREATE OR REPLACE PROCEDURE l2_q2(P1 NUMBER, P2 NUMBER) AS
+  2      v_result NUMBER;
+  3      BEGIN
+  4          v_result := l2_q1(p1,p2);
+  5          DBMS_OUTPUT.PUT_LINE('For a rectangle of size .' || P1 || '. by .' || P2 || '. the area is .' || v_result || '.');
+  6      END;
+  7  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> exec l2_q2(1,2)
+
+For a rectangle of size .1. by .2. the area is .2.                              
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE l2_q3(P1 NUMBER, P2 NUMBER) AS
+  2      v_result NUMBER;
+  3      shape VARCHAR(10);
+  4      BEGIN
+  5          v_result := l2_q1(p1,p2);
+  6          IF P1 = P2 THEN
+  7              shape := 'square';
+  8          ELSE
+  9              shape := 'rectangle';
+  10          END IF;
+  11          DBMS_OUTPUT.PUT_LINE('For a ' || shape || ' of size .' || P1 || '. by .' || P2 || '. the area is .' || v_result || '.');
+  12      END;
+  13  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> exec l2_q3(4,2)
+
+For a rectangle of size .4. by .2. the area is .8.                              
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec l2_q3(2,2)
+
+For a square of size .2. by .2. the area is .4.                                 
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE l2_q4(P1 NUMBER, P2 CHAR) AS
+  2      V_RESULT NUMBER;
+  3      V_CURRENCY VARCHAR(20);
+  4      BEGIN
+  5          IF P2 = 'E' THEN
+  6              V_RESULT := P1*1.50;
+  7              V_CURRENCY := 'EUROS';
+  8          ELSIF P2 = 'Y' THEN
+  9              V_RESULT := P1*100;
+  10              V_CURRENCY := 'YEN';
+  11          ELSIF P2 = 'V' THEN
+  12              V_RESULT := P1*10000;
+  13              V_CURRENCY := 'Viet Nam DONG';
+  14          ELSIF P2 = 'Z' THEN
+  15              V_RESULT := P1*1000000;
+  16              V_CURRENCY := 'Endora ZIP';
+  17          END IF;
+  18          DBMS_OUTPUT.PUT_LINE('For ' || P1 || ' dollars Canadian, you will have ' || V_RESULT || ' ' || V_CURRENCY);
+  19      END;
+  20  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> exec l2_q4(4,'E')
+
+For 4 dollars Canadian, you will have 6 EUROS                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec l2_q4(4,'Y')
+
+For 4 dollars Canadian, you will have 400 YEN                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec l2_q4(4,'V')
+
+For 4 dollars Canadian, you will have 40000 Viet Nam DONG                       
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec l2_q4(4,'Z')
+
+For 4 dollars Canadian, you will have 4000000 Endora ZIP                        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE FUNCTION YES_EVEN (p1 IN NUMBER)
+  2  RETURN BOOLEAN AS
+  3  v_result BOOLEAN := false;
+  4  BEGIN
+  5  	IF MOD(p1, 2) = 0 THEN
+  6          v_result := true;
+  7      END IF;
+  8
+  9      RETURN v_result;
+  10  END;
+  11  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE l2_q6(P1 NUMBER) AS
+  2      V_RESULT VARCHAR(10);
+  3      BEGIN
+  4          IF YES_EVEN(P1) THEN
+  5              v_result := 'EVEN';
+  6          ELSE
+  7              v_result := 'ODD';
+  8          END IF;
+  9          DBMS_OUTPUT.PUT_LINE('Number ' ||P1 || ' is ' || v_result);
+  10      END;
+  11  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> exec l2_q6(4)
+
+Number 4 is EVEN                                                                
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec l2_q6(3)
+
+Number 3 is ODD                                                                 
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE FUNCTION CONVERT_TO_CAD(P1 NUMBER, P2 CHAR)
+  2  RETURN NUMBER AS
+  3      V_RESULT NUMBER;
+  4      BEGIN
+  5          IF P2 = 'E' THEN
+  6              V_RESULT := P1/1.50;
+  7          ELSIF P2 = 'Y' THEN
+  8              V_RESULT := P1/100;
+  9          ELSIF P2 = 'V' THEN
+  10              V_RESULT := P1/10000;
+  11          ELSIF P2 = 'Z' THEN
+  12              V_RESULT := P1/1000000;
+  13          END IF;
+  14          RETURN V_RESULT;
+  15      END;
+  16  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> SELECT CONVERT_TO_CAD(4,'E') AS result FROM DUAL;
+
+    RESULT
+----------
+2.66666666666666666666666666666666666667
+
+SQL> SELECT CONVERT_TO_CAD(4,'Y') AS result FROM DUAL;
+
+    RESULT
+----------
+      0.04
+
+SQL> SELECT CONVERT_TO_CAD(4,'V') AS result FROM DUAL;
+
+    RESULT
+----------
+    0.0004
+
+SQL> SELECT CONVERT_TO_CAD(4,'Z') AS result FROM DUAL;
+
+    RESULT
+----------
+  0.000004
+
+SQL> CREATE OR REPLACE FUNCTION CONVERT_FROM_CAD(P1 NUMBER, P2 CHAR)
+  2  RETURN NUMBER AS
+  3      V_RESULT NUMBER;
+  4      BEGIN
+  5          IF P2 = 'E' THEN
+  6              V_RESULT := P1*1.50;
+  7          ELSIF P2 = 'Y' THEN
+  8              V_RESULT := P1*100;
+  9          ELSIF P2 = 'V' THEN
+  10              V_RESULT := P1*10000;
+  11          ELSIF P2 = 'Z' THEN
+  12              V_RESULT := P1*1000000;
+  13          END IF;
+  14          RETURN V_RESULT;
+  15      END;
+  16  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> SELECT CONVERT_FROM_CAD(1,'E') AS result FROM DUAL;
+
+    RESULT
+----------
+       1.5
+
+SQL> SELECT CONVERT_FROM_CAD(400,'Y') AS result FROM DUAL;
+
+    RESULT
+----------
+     40000
+
+SQL> SELECT CONVERT_FROM_CAD(40000,'V') AS result FROM DUAL;
+
+    RESULT
+----------
+ 400000000
+
+SQL> SELECT CONVERT_FROM_CAD(4000000,'Z') AS result FROM DUAL;
+
+    RESULT
+----------
+4000000000000
+
+SQL> CREATE OR REPLACE FUNCTION l2_q1 (p1 IN NUMBER, p2 IN NUMBER)
+  2  RETURN NUMBER AS
+  3  BEGIN
+  4  	RETURN p1*p2;
+  5  END;
+  6  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE FUNCTION GET_CURRENCY(P2 CHAR) RETURN VARCHAR2 AS
+  2      V_CURRENCY VARCHAR(20);
+  3  BEGIN
+  4      IF P2 = 'E' THEN
+  5          V_CURRENCY := 'EUROS';
+  6      ELSIF P2 = 'Y' THEN
+  7          V_CURRENCY := 'YEN';
+  8      ELSIF P2 = 'C' THEN
+  9          V_CURRENCY := 'Canadian dollar';
+  10      ELSIF P2 = 'V' THEN
+  11          V_CURRENCY := 'Viet Nam DONG';
+  12      ELSIF P2 = 'Z' THEN
+  13          V_CURRENCY := 'Endora ZIP';
+  14      END IF;
+  15      RETURN V_CURRENCY;
+  16  END;
+  17  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> SELECT GET_CURRENCY('E') AS result FROM DUAL;
+
+RESULT                                                                          
+--------------------------------------------------------------------------------
+                                                                           EUROS
+
+SQL> SELECT GET_CURRENCY('Y') AS result FROM DUAL;
+
+RESULT                                                                          
+--------------------------------------------------------------------------------
+                                                                             YEN
+
+SQL> SELECT GET_CURRENCY('V') AS result FROM DUAL;
+
+RESULT                                                                          
+--------------------------------------------------------------------------------
+                                                                   Viet Nam DONG
+
+SQL> SELECT GET_CURRENCY('Z') AS result FROM DUAL;
+
+RESULT                                                                          
+--------------------------------------------------------------------------------
+                                                                      Endora ZIP
+
+SQL> SELECT GET_CURRENCY('C') AS result FROM DUAL;
+
+RESULT                                                                          
+--------------------------------------------------------------------------------
+                                                                 Canadian dollar
+
+SQL> CREATE OR REPLACE PROCEDURE l2_bonus(P1 NUMBER, V_FROM CHAR, V_TO CHAR) AS
+  2      V_TEMP_RES NUMBER;
+  3      V_RESULT NUMBER;
+  4      BEGIN
+  5          IF V_FROM = 'C' THEN -- CONVERT FROM CANADIAN
+  6             V_RESULT := CONVERT_FROM_CAD(P1, V_TO);
+  7          ELSIF V_TO = 'C' THEN -- CONVERT TO CANADIAN
+  8              V_RESULT := CONVERT_TO_CAD(P1, V_FROM);
+  9          ELSE
+  10              V_TEMP_RES := CONVERT_TO_CAD(P1, V_FROM);
+  11              V_RESULT := CONVERT_FROM_CAD(V_TEMP_RES, V_TO);
+  12          END IF;
+  13          DBMS_OUTPUT.PUT_LINE('For ' || P1 || ' ' || GET_CURRENCY(V_FROM) || ', you will have ' || V_RESULT || ' ' || GET_CURRENCY(V_TO));
+  14      END;
+  15  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> exec l2_bonus(2,'Y','V')
+
+For 2 YEN, you will have 200 Viet Nam DONG                                      
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- For 2 YEN, you will have 200 Viet Nam DONG
+SQL> exec l2_bonus(20000,'V','C')
+
+For 20000 Viet Nam DONG, you will have 2 Canadian dollar                        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- For 20000 Viet Nam DONG, you will have 2 dollars Canadian
+SQL> exec l2_bonus(20000,'C','E')
+
+For 20000 Canadian dollar, you will have 30000 EUROS                            
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec l2_bonus(30,'Y','Z')
+
+For 30 YEN, you will have 300000 Endora ZIP                                     
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec l2_bonus(30,'Z','E')
+
+For 30 Endora ZIP, you will have .000045 EUROS                                  
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> SPOOL OFF;
+
