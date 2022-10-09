@@ -1,3 +1,7 @@
+SPOOL './lab-3.txt'
+SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+FROM dual;
+
 -- Question 1: (user scott)
 -- Create a procedure that accepts an employee number to display the name of 
 -- the department where he works, his name, his annual salary (do not forget 
@@ -77,7 +81,6 @@ END;
 exec l3_q2(10)
 exec l3_q2(12)
 exec l3_q2(20)
--- desc INVENTORY
 
 -- Question 3: (use schemas des03, and script 7northwoods) 
 -- Create a function called find_age that accepts a date and return a number.
@@ -133,9 +136,7 @@ exec l3_q3(10)
 -- confirmation of the DML performed (hint: Do not forget to add COMMIT inside 
 -- the procedure)
 
-SELECT * FROM CONSULTANT_SKILL
-
-CREATE OR REPLACE PROCEDURE l3_q4(P_CID NUMBER, P_SKID NUMBER, P_CERTST CHAR) AS
+CREATE OR REPLACE PROCEDURE DISPLAY_DATA(P_CID NUMBER, P_SKID NUMBER, P_CERTST CHAR) AS
     V_LNAME CONSULTANT.C_LAST%TYPE;
     V_FNAME CONSULTANT.C_FIRST%TYPE;
     V_SKDESC SKILL.SKILL_DESCRIPTION%TYPE;
@@ -147,25 +148,85 @@ BEGIN
     JOIN SKILL SK ON SK.SKILL_ID = C_SK.SKILL_ID
     WHERE C.C_ID = P_CID
     AND C_SK.SKILL_ID = P_SKID;
-    
-    DBMS_OUTPUT.PUT_LINE('CONSULTANT NUMBER ' || P_CID || ' FOUND, UPDATE NEEDED!');
-    UPDATE CONSULTANT_SKILL SET CERTIFICATION = P_CERTST WHERE C_ID = P_CID;
 
-    DBMS_OUTPUT.PUT_LINE('CONSULTANT NUMBER ' || P_CID || ' UPDATED!');
-    DBMS_OUTPUT.PUT_LINE('CONSULTANT NUMBER ' || P_CID 
-        || ' IS ' || V_FNAME || ' ' || V_LNAME
-         || '. THEY AARE A ' || V_SKDESC || '. CERTIFICATION STATUS IS:' || P_CERTST || '!');
-  
+    DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID 
+        || ' is ' || V_FNAME || ' ' || V_LNAME
+        || '. They work in ' || V_SKDESC || '. Certification status is: ' || P_CERTST || '!');
 END;
 /
 
-EXEC l3_q4(100, 1, 'N')
+CREATE OR REPLACE PROCEDURE l3_q4(P_CID NUMBER, P_SKID NUMBER, P_CERTST CHAR) AS
+    V_EXC NUMBER;
+    V_SKID NUMBER;
+    V_CID NUMBER;
+    V_CERTST CHAR;
+BEGIN
+    -- VERIFY C_ID EXISTS IN CONSULTANT 
+    V_EXC := 1; 
+    SELECT C_ID
+    INTO V_CID
+    FROM CONSULTANT
+    WHERE C_ID = P_CID;
 
-SELECT C.C_ID, C_FIRST, C_LAST, SKILL_DESCRIPTION, C_SK.SKILL_ID, C_SK.CERTIFICATION
-    --INTO V_FNAME, V_LNAME, V_SKDESC
-FROM CONSULTANT C 
-JOIN CONSULTANT_SKILL C_SK ON C.C_ID = C_SK.C_ID
-JOIN SKILL SK ON SK.SKILL_ID = C_SK.SKILL_ID
-WHERE C.C_ID = 100 AND C_SK.SKILL_ID = 1
+    -- VERIFY SK_ID EXISTS IN SKILL
+    V_EXC := 2; 
+    SELECT SKILL_ID
+    INTO V_SKID
+    FROM SKILL
+    WHERE SKILL_ID = P_SKID;
 
-SELECT * FROM CONSULTANT_SKILL
+    -- VERIFY COMBINATION EXISTS IN CONSULTANT_SKILL
+    V_EXC := 3;
+    SELECT C_ID, SKILL_ID, CERTIFICATION
+    INTO V_CID, V_SKID, V_CERTST
+    FROM CONSULTANT_SKILL
+    WHERE SKILL_ID = P_SKID AND C_ID = P_CID;
+
+    -- IF COMBINATION EXISTS, CHECK IF IT'S NECESSARY TO UPDATE  CERTIFICATION
+    IF V_CERTST = P_CERTST THEN
+        DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' found, no update needed!');
+        DISPLAY_DATA(P_CID, P_SKID, P_CERTST);
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' found, update needed!');
+        IF P_CERTST <> 'Y' AND P_CERTST <> 'N' THEN
+            DBMS_OUTPUT.PUT_LINE('Certification code ' || P_CERTST || ' is invalid!');
+        ELSE 
+            UPDATE CONSULTANT_SKILL SET CERTIFICATION = P_CERTST WHERE C_ID = P_CID;
+            DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' updated!');
+            DISPLAY_DATA(P_CID, P_SKID, P_CERTST);           
+            COMMIT;
+        END IF;
+    END IF;
+
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        IF V_EXC = 1 THEN -- C_ID DOES NOT EXIST
+            DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' does not exist, please add it first!');
+        ELSIF V_EXC = 2 THEN -- SKILL_ID DOES NOT EXIST
+            DBMS_OUTPUT.PUT_LINE('Skill number ' || P_SKID || ' does not exist, please add it first!');
+        ELSIF V_EXC = 3 THEN -- COMBINATION DOES NOT EXIST: INSERT IT
+            DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' and skill number ' || P_SKID || ' need to be inserted!');
+            IF P_CERTST <> 'Y' AND P_CERTST <> 'N' THEN
+                DBMS_OUTPUT.PUT_LINE('Certification code ' || P_CERTST || ' is invalid!');
+            ELSE
+                INSERT INTO CONSULTANT_SKILL(C_ID, SKILL_ID, CERTIFICATION)
+                VALUES(P_CID, P_SKID, P_CERTST);
+                DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' and skill number ' || P_SKID || ' inserted!');
+                DISPLAY_DATA(P_CID, P_SKID, P_CERTST);
+                COMMIT;
+            END IF;
+        END IF;
+END;
+/
+-- NO C_ID
+EXEC l3_q4(120, 1, 'N') 
+-- NO SK_ID
+EXEC l3_q4(100, 10, 'N')
+-- NO COMBINATION
+EXEC l3_q4(100, 4, 'Y') 
+-- INVALID CERTIFICATION
+EXEC l3_q4(102, 7, 'S') 
+-- UPDATE CERTIFICATION
+EXEC l3_q4(103, 9, 'N') 
+
+SPOOL OFF;

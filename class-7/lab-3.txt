@@ -1,0 +1,313 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            09 October   Twenty Twenty-Two Sunday    12:03:38 Am
+
+SQL> CREATE OR REPLACE PROCEDURE l3_q1(p_empno IN NUMBER) AS
+  2      v_ename emp.ENAME%TYPE;
+  3      v_msal emp.SAL%TYPE;
+  4      v_asal emp.SAL%TYPE;
+  5      v_com emp.COMM%TYPE;
+  6      v_dname dept.DNAME%TYPE;
+  7  BEGIN
+  8      SELECT ENAME, SAL, COMM, D.DNAME
+  9      INTO v_ename, v_msal, v_com, v_dname
+  10      from EMP E
+  11      JOIN DEPT D ON E.DEPTNO = D.DEPTNO
+  12      WHERE empno = p_empno;
+  13
+  14      v_asal := v_msal * 12;
+  15      IF v_com > 0 THEN
+  16          v_asal := v_asal + v_com;
+  17      ELSE
+  18          v_com := 0;
+  19      END IF;
+  20
+  21      DBMS_OUTPUT.PUT_LINE('EMPLOYEE NUMBER ' || P_EMPNO || ' IS '
+  22          || V_ENAME || '. THEIR DEPARTMENT IS ' || V_DNAME
+  23          || '. HIS MONTHLY SALARY IS $' || V_MSAL
+  24          || '. HIS COMMISION IS $' || V_COM
+  25          || '. ANNUAL SALARY IS $' || V_ASAL || '. ');
+  26
+  27      EXCEPTION
+  28      WHEN NO_DATA_FOUND THEN
+  29          DBMS_OUTPUT.PUT_LINE('EMPLOYEE NUMBER ' || P_EMPNO || ' DOES NOT EXIST! ');
+  30  END;
+  31  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> EXEC l3_q1(7369)
+
+EMPLOYEE NUMBER 7369 IS SMITH. THEIR DEPARTMENT IS RESEARCH. HIS MONTHLY SALARY 
+IS $1000. HIS COMMISION IS $0. ANNUAL SALARY IS $12000.                         
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC l3_q1(1234)
+
+EMPLOYEE NUMBER 1234 DOES NOT EXIST!                                            
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE l3_q2(p_inv_id IN INVENTORY.INV_ID%TYPE) AS
+  2      v_idesc ITEM.ITEM_DESC%TYPE;
+  3      v_color INVENTORY.COLOR%TYPE;
+  4      v_qty INVENTORY.INV_QOH%TYPE;
+  5      v_price INVENTORY.INV_PRICE%TYPE;
+  6      v_value NUMBER;
+  7  BEGIN
+  8      SELECT ITEM_DESC, COLOR, INV_QOH, INV_PRICE
+  9      INTO v_idesc, v_color, v_qty, v_price
+  10      FROM INVENTORY
+  11      JOIN ITEM ON ITEM.ITEM_ID = INVENTORY.ITEM_ID
+  12      WHERE INV_ID = p_inv_id;
+  13
+  14      v_value := v_price * v_qty;
+  15
+  16      DBMS_OUTPUT.PUT_LINE('INV NUMBER ' || p_inv_id
+  17          || ' IS ' || v_idesc
+  18          || '. ITS COLOR $' || v_color
+  19          || '. ITS PRICE $' || v_price
+  20          || '. FOR A TOTAL OF $' || v_value || '. ');
+  21
+  22      EXCEPTION
+  23      WHEN NO_DATA_FOUND THEN
+  24          DBMS_OUTPUT.PUT_LINE('INVENTORY NUMBER ' || p_inv_id || ' DOES NOT EXIST! ');
+  25  END;
+  26  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> exec l3_q2(10)
+
+INV NUMBER 10 IS Women's Fleece Pullover. ITS COLOR $Eggplant. ITS PRICE $59.95.
+FOR A TOTAL OF $10071.6.                                                        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec l3_q2(12)
+
+INV NUMBER 12 IS Women's Fleece Pullover. ITS COLOR $Royal. ITS PRICE $59.95.   
+FOR A TOTAL OF $0.                                                              
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec l3_q2(20)
+
+INV NUMBER 20 IS Children's Beachcomber Sandals. ITS COLOR $Bright Pink. ITS    
+PRICE $15.99. FOR A TOTAL OF $2190.63.                                          
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE FUNCTION find_age (p_date IN DATE)
+  2  RETURN NUMBER AS
+  3  	v_sysdate DATE;
+  4  BEGIN
+  5      SELECT SYSDATE INTO v_sysdate FROM DUAL;
+  6      RETURN FLOOR((v_sysdate - p_date) / 365);
+  7  END;
+  8  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE l3_q3(p_sid NUMBER) AS
+  2      v_sfname STUDENT.S_FIRST%TYPE;
+  3      v_slname STUDENT.S_LAST%TYPE;
+  4      v_sbirthdate STUDENT.S_DOB%TYPE;
+  5      v_sage NUMBER;
+  6  BEGIN
+  7      SELECT S_LAST, S_FIRST, S_DOB
+  8      INTO v_sfname, v_slname, v_sbirthdate
+  9      FROM STUDENT
+  10      WHERE S_ID = p_sid;
+  11      v_sage := find_age(v_sbirthdate);
+  12      DBMS_OUTPUT.PUT_LINE('Student: ' || v_sfname || ' ' || v_slname
+  13      || '. Birthdate: ' || v_sbirthdate
+  14      || '. Age: ' || v_sage || ' years old.'
+  15      );
+  16      EXCEPTION
+  17      WHEN NO_DATA_FOUND THEN
+  18          DBMS_OUTPUT.PUT_LINE('STUDENT NUMBER ' || p_sid || ' DOES NOT EXIST! ');
+  19
+  20  END;
+  21  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> exec l3_q3(1)
+
+Student: Miller Sarah. Birthdate: 14-JUL-85. Age: 37 years old.                 
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec l3_q3(10)
+
+STUDENT NUMBER 10 DOES NOT EXIST!                                               
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE DISPLAY_DATA(P_CID NUMBER, P_SKID NUMBER, P_CERTST CHAR) AS
+  2      V_LNAME CONSULTANT.C_LAST%TYPE;
+  3      V_FNAME CONSULTANT.C_FIRST%TYPE;
+  4      V_SKDESC SKILL.SKILL_DESCRIPTION%TYPE;
+  5  BEGIN
+  6      SELECT C_FIRST, C_LAST, SKILL_DESCRIPTION
+  7      INTO V_FNAME, V_LNAME, V_SKDESC
+  8      FROM CONSULTANT C
+  9      JOIN CONSULTANT_SKILL C_SK ON C.C_ID = C_SK.C_ID
+  10      JOIN SKILL SK ON SK.SKILL_ID = C_SK.SKILL_ID
+  11      WHERE C.C_ID = P_CID
+  12      AND C_SK.SKILL_ID = P_SKID;
+  13
+  14      DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID
+  15          || ' is ' || V_FNAME || ' ' || V_LNAME
+  16          || '. They work in ' || V_SKDESC || '. Certification status is: ' || P_CERTST || '!');
+  17  END;
+  18  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE l3_q4(P_CID NUMBER, P_SKID NUMBER, P_CERTST CHAR) AS
+  2      V_EXC NUMBER;
+  3      V_SKID NUMBER;
+  4      V_CID NUMBER;
+  5      V_CERTST CHAR;
+  6  BEGIN
+  7      -- VERIFY C_ID EXISTS IN CONSULTANT
+  8      V_EXC := 1;
+  9      SELECT C_ID
+  10      INTO V_CID
+  11      FROM CONSULTANT
+  12      WHERE C_ID = P_CID;
+  13
+  14      -- VERIFY SK_ID EXISTS IN SKILL
+  15      V_EXC := 2;
+  16      SELECT SKILL_ID
+  17      INTO V_SKID
+  18      FROM SKILL
+  19      WHERE SKILL_ID = P_SKID;
+  20
+  21      -- VERIFY COMBINATION EXISTS IN CONSULTANT_SKILL
+  22      V_EXC := 3;
+  23      SELECT C_ID, SKILL_ID, CERTIFICATION
+  24      INTO V_CID, V_SKID, V_CERTST
+  25      FROM CONSULTANT_SKILL
+  26      WHERE SKILL_ID = P_SKID AND C_ID = P_CID;
+  27
+  28      -- IF COMBINATION EXISTS, CHECK IF IT'S NECESSARY TO UPDATE  CERTIFICATION
+  29      IF V_CERTST = P_CERTST THEN
+  30          DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' found, no update needed!');
+  31          DISPLAY_DATA(P_CID, P_SKID, P_CERTST);
+  32      ELSE
+  33          DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' found, update needed!');
+  34          IF P_CERTST <> 'Y' AND P_CERTST <> 'N' THEN
+  35              DBMS_OUTPUT.PUT_LINE('Certification code ' || P_CERTST || ' is invalid!');
+  36          ELSE
+  37              UPDATE CONSULTANT_SKILL SET CERTIFICATION = P_CERTST WHERE C_ID = P_CID;
+  38              DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' updated!');
+  39              DISPLAY_DATA(P_CID, P_SKID, P_CERTST);
+  40              COMMIT;
+  41          END IF;
+  42      END IF;
+  43
+  44      EXCEPTION
+  45      WHEN NO_DATA_FOUND THEN
+  46          IF V_EXC = 1 THEN -- C_ID DOES NOT EXIST
+  47              DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' does not exist, please add it first!');
+  48          ELSIF V_EXC = 2 THEN -- SKILL_ID DOES NOT EXIST
+  49              DBMS_OUTPUT.PUT_LINE('Skill number ' || P_SKID || ' does not exist, please add it first!');
+  50          ELSIF V_EXC = 3 THEN -- COMBINATION DOES NOT EXIST: INSERT IT
+  51              DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' and skill number ' || P_SKID || 'need to be inserted!');
+  52              IF P_CERTST <> 'Y' AND P_CERTST <> 'N' THEN
+  53                  DBMS_OUTPUT.PUT_LINE('Certification code ' || P_CERTST || ' is invalid!');
+  54              ELSE
+  55                  INSERT INTO CONSULTANT_SKILL(C_ID, SKILL_ID, CERTIFICATION)
+  56                  VALUES(P_CID, P_SKID, P_CERTST);
+  57                  DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' and skill number ' || P_SKID || ' inserted!');
+  58                  DISPLAY_DATA(P_CID, P_SKID, P_CERTST);
+  59                  COMMIT;
+  60              END IF;
+  61          END IF;
+  62  END;
+  63  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> EXEC l3_q4(120, 1, 'N')
+
+Consultant number 120 does not exist, please add it first!                      
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC l3_q4(100, 10, 'N')
+
+Skill number 10 does not exist, please add it first!                            
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC l3_q4(100, 4, 'Y')
+
+Consultant number 100 and skill number 4need to be inserted!                    
+Consultant number 100 and skill number 4 inserted!                              
+Consultant number 100 is Mark Myers. They work in Project Management.           
+Certification status is: Y!                                                     
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC l3_q4(102, 7, 'S')
+
+Consultant number 102 found, update needed!                                     
+Certification code S is invalid!                                                
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC l3_q4(103, 9, 'N')
+
+Consultant number 103 found, update needed!                                     
+Consultant number 103 updated!                                                  
+Consultant number 103 is Sarah Carlson. They work in Windows XP Network         
+Administration. Certification status is: N!                                     
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> SPOOL OFF;
+
