@@ -1,0 +1,161 @@
+Menu du jour
+  --Parameter MODE (part 4)
+  -- BREAK
+  -- Give hint for Project Part 3
+
+1/  Mode IN
+    Mode by default: We don't have to mention the mode
+  Ex: CREATE OR REPLACE PROCEDURE p_oct5_ex1(p_empno IN NUMBER) AS
+      CREATE OR REPLACE PROCEDURE p_oct5_ex1(p_empno NUMBER) AS
+
+  Pass by value:  exec p_oct5_ex1(7369)
+  READ the value of the parameter : 
+      the parameter is on the RIGHT side of the assigning operator  ( := )
+                     v_variable := p_empno;
+                     ... WHERE empno = p_empno;
+
+2/   Mode OUT
+     We have to mention the mode
+  Ex2: CREATE OR REPLACE PROCEDURE p_oct5_ex2(p_salary OUT NUMBER) AS
+
+
+  
+  WRITE into the parameter, the parameter is on the LEFT side of the
+  assigning operator :       p_salary := v_variable;
+                             p_salary := 5000;
+                                    
+   Pass by variable:  exec p_oct5_ex2(v_salary)
+
+Example 3:  Create a procedure named p_oct5_ex3 that has 3 parameters,
+the first one is of mode IN to accept the employee number, the other two are
+of mode OUT to send out the salary and the name of the employee.
+  Create another procedure that accepts an employee number to display the
+following:
+    Employee number X is Y earning $Z a month
+where X is the empno Y, and Z are the salary and name RETURNED by the 
+procedure p_oct5_ex3
+
+CREATE OR REPLACE PROCEDURE p_oct5_ex3(p_empno IN NUMBER, p_sal OUT NUMBER,
+                                          p_ename OUT VARCHAR2)  AS
+   v_ename emp.ename%TYPE;
+   v_sal   emp.sal%TYPE;
+BEGIN
+   SELECT ename, sal
+   INTO   v_ename, v_sal
+   FROM   emp
+   WHERE  empno = p_empno;
+    -- send out the data
+      p_ename := v_ename;
+      p_sal   := v_sal;
+
+EXCEPTION
+   WHEN NO_DATA_FOUND THEN 
+     DBMS_OUTPUT.PUT_LINE('Employee number ' || p_empno ||' not exist!');
+END;
+/
+
+CREATE OR REPLACE PROCEDURE p_use_ex3(p_empno IN NUMBER) AS
+ 
+   v_name emp.ename%TYPE;
+   v_salary emp.sal%TYPE;
+BEGIN
+   p_oct5_ex3(p_empno, v_salary, v_name);
+   IF v_salary IS NOT NULL THEN
+DBMS_OUTPUT.PUT_LINE('Employee number ' || p_empno ||' is ' || v_name ||
+  ', earning $' || v_salary || ' a month.');
+   END IF;
+END;
+/
+set serveroutput on
+exec p_use_ex3(8888)
+
+
+3/   Mode IN OUT
+     We have to mention the mode
+  Ex4: CREATE OR REPLACE PROCEDURE p_oct5_ex4(p_empno_sal IN OUT NUMBER) AS
+We can both READ and WRITE!!!!
+READ the value of the parameter : 
+      the parameter is on the RIGHT side of the assigning operator  ( := )
+                     v_empno := p_empno_sal;
+                 ... WHERE empno = p_empno_sal;
+  
+  WRITE into the parameter, the parameter is on the LEFT side of the
+  assigning operator :       p_empno_sal := v_sal;
+                             p_empno_sal := 5000;
+                                    
+   Pass by variable:  exec p_oct5_ex4(v_empno_sal)
+
+Example 5: Create a procedure with 2 parameters of mode IN OUT.  The first
+parameter is used to send in the employee number and send out the income tax
+of the employee.  The second parameter is used to send in the job and send
+out the name of the employee.  The procedure will update the job of the employee
+and return the income tax of the employee using the scale below
+
+>= 5000        25%   tax
+4000 - 4999    20%
+3000 - 3999    15%
+2000 - 2999    10%
+< 1999         5%
+
+Using the procedure just created above, create a procedure named p_use_ex5
+that accepts an employee number and a job to display the following
+
+  Employee number X is Y. His new job is Z enjoying $M income tax 
+
+
+CREATE OR REPLACE PROCEDURE p_oct5_ex5(p_empno_tax IN OUT NUMBER,
+                                       p_job_ename IN OUT VARCHAR2) AS
+  v_sal emp.sal%TYPE;
+  v_ename emp.ename%TYPE;
+  v_tax NUMBER;
+
+BEGIN
+  SELECT ename, sal
+  INTO   v_ename, v_sal
+  FROM   emp
+  WHERE  empno = p_empno_tax;
+    IF v_sal >= 5000 THEN
+      v_tax := v_sal * 25 / 100;
+    ELSIF v_sal >= 4000 THEN
+      v_tax := v_sal * 20 / 100;
+    ELSIF v_sal >= 3000 THEN
+      v_tax := v_sal * 15 / 100;
+    ELSIF v_sal >= 2000 THEN
+      v_tax := v_sal * 10 / 100;
+    ELSIF v_sal >= 0 THEN
+      v_tax := v_sal * 5 / 100;
+    END IF;
+  UPDATE emp SET job = p_job_ename WHERE empno = p_empno_tax;
+    -- send out
+      p_empno_tax := v_tax;
+      p_job_ename := v_ename;
+  COMMIT;
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Employee number ' || p_empno_tax ||' not exist!');
+END;
+/
+
+CREATE OR REPLACE PROCEDURE p_use_ex5(p_empno NUMBER, p_job VARCHAR2) AS
+  v_empno_tax NUMBER := p_empno;
+  v_job_ename VARCHAR2(40) := p_job;
+BEGIN
+  p_oct5_ex5(v_empno_tax, v_job_ename) ;
+DBMS_OUTPUT.PUT_LINE('Employee number ' ||p_empno || ' is ' ||v_job_ename ||
+'. His new job is ' || p_job ||' enjoying $' || v_empno_tax ||' a month.');
+END;
+/
+
+exec p_use_ex5(7839, 'CLEANER')
+exec p_use_ex5(7369, 'MANAGER')
+
+
+
+
+describe emp
+
+
+
+
+
+            

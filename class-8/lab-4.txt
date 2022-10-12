@@ -1,0 +1,187 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            12 October   Twenty Twenty-Two Wednesday 08:52:45 Pm
+
+SQL> CREATE OR REPLACE PROCEDURE COMPARE_NUMS(
+  2      P_NUM1 IN NUMBER,
+  3      P_NUM2 IN NUMBER,
+  4      P_RESULT OUT VARCHAR2
+  5  ) AS
+  6  BEGIN
+  7      IF P_NUM1 = P_NUM2 THEN
+  8          P_RESULT := 'EQUAL';
+  9      ELSE
+  10          P_RESULT := 'DIFFERENT';
+  11      END IF;
+  12  END;
+  13  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE L4Q1(
+  2      P_SIDE1 IN NUMBER,
+  3      P_SIDE2 IN NUMBER
+  4  ) AS
+  5      V_RESULT VARCHAR2(10);
+  6      V_AREA NUMBER;
+  7      V_PERIMETER NUMBER;
+  8      V_SHAPE VARCHAR(10);
+  9  BEGIN
+  10      v_area := p_side1 * p_side2;
+  11      v_perimeter := (p_side1 + p_side2)*2;
+  12      COMPARE_NUMS(p_side1, p_side2, v_result);
+  13      IF V_RESULT = 'EQUAL' THEN
+  14          v_shape := 'square';
+  15      ELSE
+  16          v_shape := 'rectangle';
+  17      END IF;
+  18
+  19      DBMS_OUTPUT.PUT_LINE(
+  20          'The area of a ' || v_shape || ' size ' || p_side1 ||
+  21          ' by ' || p_side2 || ' is ' || v_area || '. Its perimeter is ' ||
+  22          v_perimeter || '.'
+  23      );
+  24  END;
+  25  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> EXEC L4Q1(2,2)
+
+The area of a square size 2 by 2 is 4. Its perimeter is 8.                      
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC L4Q1(2,3)
+
+The area of a rectangle size 2 by 3 is 6. Its perimeter is 10.                  
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE pseudo_fun(
+  2      P_SIDE1_AREA IN OUT NUMBER,
+  3      P_SIDE2_PERIMETER IN OUT NUMBER
+  4  ) AS
+  5      V_SIDE1 NUMBER := P_SIDE1_AREA;
+  6      V_SIDE2 NUMBER := P_SIDE2_PERIMETER;
+  7  BEGIN
+  8      P_SIDE1_AREA := V_SIDE1 * V_SIDE2;
+  9      P_SIDE2_PERIMETER := (V_SIDE1 + V_SIDE2)*2;
+  10  END;
+  11  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE L4Q2(
+  2      P_SIDE1 IN NUMBER,
+  3      P_SIDE2 IN NUMBER
+  4  ) AS
+  5      V_SIDE1_AREA NUMBER := P_SIDE1;
+  6      V_SIDE2_PERIMETER NUMBER := P_SIDE2;
+  7      V_SHAPE VARCHAR2(10);
+  8  BEGIN
+  9      pseudo_fun(V_SIDE1_AREA, V_SIDE2_PERIMETER);
+  10      IF P_SIDE1 = P_SIDE2 THEN
+  11          v_shape := 'square';
+  12      ELSE
+  13          v_shape := 'rectangle';
+  14      END IF;
+  15      DBMS_OUTPUT.PUT_LINE(
+  16              'The area of a ' || v_shape || ' size ' || p_side1 ||
+  17              ' by ' || p_side2 || ' is ' || V_SIDE1_AREA || '. Its perimeter is ' ||
+  18              V_SIDE2_PERIMETER || '.'
+  19      );
+  20  END;
+  21  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> EXEC L4Q2(2,2)
+
+The area of a square size 2 by 2 is 4. Its perimeter is 8.                      
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC L4Q2(2,3)
+
+The area of a rectangle size 2 by 3 is 6. Its perimeter is 10.                  
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE update_price(
+  2      p_invid_price IN OUT NUMBER,
+  3      p_inc_qoh IN OUT NUMBER
+  4  ) AS
+  5      v_invid INVENTORY.inv_id%TYPE := p_invid_price;
+  6      v_price INVENTORY.INV_PRICE%type;
+  7      v_new_price number;
+  8      v_qoh INVENTORY.INV_QOH%TYPE;
+  9  BEGIN
+  10      SELECT INV_PRICE, INV_QOH
+  11      INTO v_price, v_qoh
+  12      from INVENTORY
+  13      WHERE inv_id = v_invid;
+  14
+  15      v_new_price := v_price*(1+p_inc_qoh/100);
+  16      UPDATE INVENTORY SET INV_PRICE = v_new_price WHERE inv_id = v_invid;
+  17      p_invid_price := v_new_price;
+  18      p_inc_qoh := v_qoh;
+  19      COMMIT;
+  20
+  21  EXCEPTION
+  22      WHEN NO_DATA_FOUND THEN
+  23          DBMS_OUTPUT.PUT_LINE('Inventory id ' || v_invid ||' does not exist!');
+  24  END;
+  25  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE L4Q3(
+  2      p_invid IN INVENTORY.INV_ID%TYPE,
+  3      p_incr IN NUMBER
+  4  ) AS
+  5    v_invid_price NUMBER:= p_invid;
+  6    v_incr_qoh NUMBER := p_incr;
+  7    v_value number;
+  8  BEGIN
+  9      update_price(v_invid_price, v_incr_qoh);
+  10      v_value := v_invid_price * v_incr_qoh;
+  11      DBMS_OUTPUT.PUT_LINE('The price for item' || p_invid || ' has been updated. New value of the inventory is: ' || v_value );
+  12  END;
+  13  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> exec L4Q3(2, 20);
+
+The price for item2 has been updated. New value of the inventory is: 6469.488   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> SPOOL OFF;
+
