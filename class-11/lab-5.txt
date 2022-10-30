@@ -1,0 +1,366 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            25 October   Twenty Twenty-Two Tuesday   10:10:56 Pm
+
+SQL> -- Question 1 :
+SQL> -- Run script 7northwoods. DES03
+SQL> -- Using cursor to display many rows of data, create a procedure to display
+SQL> -- all the rows of table term.
+SQL> CREATE OR REPLACE PROCEDURE L5Q1 AS
+  2  -- STEP 1
+  3      CURSOR TERM_CUR IS
+  4          SELECT TERM_ID, TERM_DESC, STATUS
+  5          FROM  TERM;
+  6      V_TERMID TERM.TERM_ID%TYPE;
+  7      V_TERMDESC TERM.TERM_DESC%TYPE;
+  8      V_STATUS TERM.STATUS%TYPE;
+  9  BEGIN
+  10      -- STEP 2
+  11      OPEN TERM_CUR;
+  12
+  13      -- STEP 3
+  14      FETCH TERM_CUR INTO V_TERMID, V_TERMDESC, V_STATUS;
+  15          WHILE TERM_CUR%FOUND LOOP
+  16              DBMS_OUTPUT.PUT_LINE('TERM ID ' || V_TERMID || ' TERM_DESC ' || V_TERMDESC || ' STATUS ' || V_STATUS || '.');
+  17
+  18          FETCH TERM_CUR INTO V_TERMID, V_TERMDESC, V_STATUS;
+  19      END LOOP;
+  20
+  21      -- STEP 4
+  22      CLOSE TERM_CUR;
+  23      -- COMMIT;
+  24  END;
+  25  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> EXEC L5Q1
+
+TERM ID 1 TERM_DESC Fall 2005 STATUS CLOSED.                                    
+TERM ID 2 TERM_DESC Spring 2006 STATUS CLOSED.                                  
+TERM ID 3 TERM_DESC Summer 2006 STATUS CLOSED.                                  
+TERM ID 4 TERM_DESC Fall 2006 STATUS CLOSED.                                    
+TERM ID 5 TERM_DESC Spring 2007 STATUS CLOSED.                                  
+TERM ID 6 TERM_DESC Summer 2007 STATUS OPEN.                                    
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE L5Q2 AS
+  2  -- STEP 1
+  3      CURSOR INV_CUR IS
+  4          select ITEM_DESC, INV_PRICE, COLOR, INV_QOH
+  5          FROM ITEM IT
+  6          JOIN INVENTORY INV ON IT.ITEM_ID = INV.ITEM_ID;
+  7      V_ITEM_DESC ITEM.ITEM_DESC%TYPE;
+  8      V_INV_PRICE INVENTORY.INV_PRICE%TYPE;
+  9      V_COLOR INVENTORY.COLOR%TYPE;
+  10      V_INV_QOH INVENTORY.INV_QOH%TYPE;
+  11  BEGIN
+  12      -- STEP 2
+  13      OPEN INV_CUR;
+  14      -- STEP 3
+  15      FETCH INV_CUR INTO V_ITEM_DESC, V_INV_PRICE, V_COLOR, V_INV_QOH;
+  16          WHILE INV_CUR%FOUND LOOP
+  17              DBMS_OUTPUT.PUT_LINE('Item: ' || V_ITEM_DESC || '. Price: ' || V_INV_PRICE || '. Color: ' || V_COLOR || '. Quantity: ' || V_INV_QOH || '.');
+  18          FETCH INV_CUR INTO V_ITEM_DESC, V_INV_PRICE, V_COLOR, V_INV_QOH;
+  19      END LOOP;
+  20      -- STEP 4
+  21      CLOSE INV_CUR;
+  22  END;
+  23  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> EXEC L5Q2
+
+Item: Men's Expedition Parka. Price: 123.79. Color: Spruce. Quantity: 0.        
+Item: Men's Expedition Parka. Price: 123.79. Color: Spruce. Quantity: 17.       
+Item: Men's Expedition Parka. Price: 123.79. Color: Spruce. Quantity: 114.      
+Item: Men's Expedition Parka. Price: 123.79. Color: Spruce. Quantity: 12.       
+Item: 3-Season Tent. Price: 123.79. Color: Light Grey. Quantity: 12.            
+Item: 3-Season Tent. Price: 123.79. Color: Sky Blue. Quantity: 16.              
+Item: Women's Hiking Shorts. Price: 123.79. Color: Khaki. Quantity: 0.          
+Item: Women's Hiking Shorts. Price: 123.79. Color: Navy. Quantity: 137.         
+Item: Women's Hiking Shorts. Price: 123.79. Color: Khaki. Quantity: 150.        
+Item: Women's Hiking Shorts. Price: 123.79. Color: Khaki. Quantity: 147.        
+Item: Women's Hiking Shorts. Price: 123.79. Color: Navy. Quantity: 115.         
+Item: Women's Hiking Shorts. Price: 123.79. Color: Navy. Quantity: 139.         
+Item: Women's Fleece Pullover. Price: 123.79. Color: Royal. Quantity: 112.      
+Item: Women's Fleece Pullover. Price: 123.79. Color: Royal. Quantity: 124.      
+Item: Women's Fleece Pullover. Price: 123.79. Color: Eggplant. Quantity: 187.   
+Item: Women's Fleece Pullover. Price: 123.79. Color: Eggplant. Quantity: 168.   
+Item: Women's Fleece Pullover. Price: 123.79. Color: Eggplant. Quantity: 135.   
+Item: Women's Fleece Pullover. Price: 123.79. Color: Royal. Quantity: 0.        
+Item: Children's Beachcomber Sandals. Price: 123.79. Color: Bright Pink.        
+Quantity: 123.                                                                  
+Item: Children's Beachcomber Sandals. Price: 123.79. Color: Bright Pink.        
+Quantity: 134.                                                                  
+Item: Children's Beachcomber Sandals. Price: 123.79. Color: Bright Pink.        
+Quantity: 137.                                                                  
+Item: Children's Beachcomber Sandals. Price: 123.79. Color: Bright Pink.        
+Quantity: 148.                                                                  
+Item: Children's Beachcomber Sandals. Price: 123.79. Color: Turquoise. Quantity:
+121.                                                                            
+Item: Children's Beachcomber Sandals. Price: 123.79. Color: Turquoise. Quantity:
+113.                                                                            
+Item: Children's Beachcomber Sandals. Price: 123.79. Color: Turquoise. Quantity:
+121.                                                                            
+Item: Children's Beachcomber Sandals. Price: 123.79. Color: Turquoise. Quantity:
+111.                                                                            
+Item: Boy's Surf Shorts. Price: 123.79. Color: Blue. Quantity: 50.              
+Item: Boy's Surf Shorts. Price: 123.79. Color: Blue. Quantity: 100.             
+Item: Boy's Surf Shorts. Price: 123.79. Color: Blue. Quantity: 100.             
+Item: Girl's Soccer Tee. Price: 123.79. Color: White. Quantity: 100.            
+Item: Girl's Soccer Tee. Price: 123.79. Color: White. Quantity: 100.            
+Item: Girl's Soccer Tee. Price: 123.79. Color: White. Quantity: 100.            
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Question 3 :
+SQL> -- Run script 7clearwater. - DES02
+SQL> -- Using cursor to update many rows of data, create a procedure that accepts a 
+SQL> -- number represent the percentage increase in price. The procedure will 
+SQL> -- display the old price, new price and update the database with the new price.
+SQL> CREATE OR REPLACE PROCEDURE L5Q3 (P_INCR IN NUMBER) AS
+  2  -- STEP 1
+  3  CURSOR INCR_CUR IS
+  4      SELECT INV_ID, INV_PRICE
+  5      FROM INVENTORY;
+  6  V_INVID INVENTORY.INV_ID%TYPE;
+  7  V_INVPRICE INVENTORY.INV_PRICE%TYPE;
+  8  V_NEW_PRICE INVENTORY.INV_PRICE%TYPE;
+  9
+  10  BEGIN
+  11      -- STEP 2
+  12      OPEN INCR_CUR;
+  13
+  14      -- STEP 3
+  15      FETCH INCR_CUR INTO V_INVID, V_INVPRICE;
+  16      WHILE INCR_CUR%FOUND LOOP
+  17          V_NEW_PRICE := V_INVPRICE*(1 + P_INCR/100);
+  18          UPDATE INVENTORY SET INV_PRICE = V_NEW_PRICE;
+  19          DBMS_OUTPUT.PUT_LINE('For inv ID: ' || V_INVID || ' old price is: $' || V_INVPRICE ||
+  20           '. With an increase of ' || P_INCR || '% '
+  21           || ', the new price is: $' || V_NEW_PRICE || '. ');
+  22
+  23          FETCH INCR_CUR INTO V_INVID, V_INVPRICE;
+  24      END LOOP;
+  25
+  26      -- STEP 4
+  27      CLOSE INCR_CUR;
+  28      COMMIT;
+  29  END;
+  30  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> EXEC L5Q3(20)
+
+For inv ID: 1 old price is: $123.79. With an increase of 20% , the new price is:
+$148.55.                                                                        
+For inv ID: 2 old price is: $123.79. With an increase of 20% , the new price is:
+$148.55.                                                                        
+For inv ID: 3 old price is: $123.79. With an increase of 20% , the new price is:
+$148.55.                                                                        
+For inv ID: 4 old price is: $123.79. With an increase of 20% , the new price is:
+$148.55.                                                                        
+For inv ID: 5 old price is: $123.79. With an increase of 20% , the new price is:
+$148.55.                                                                        
+For inv ID: 6 old price is: $123.79. With an increase of 20% , the new price is:
+$148.55.                                                                        
+For inv ID: 7 old price is: $123.79. With an increase of 20% , the new price is:
+$148.55.                                                                        
+For inv ID: 8 old price is: $123.79. With an increase of 20% , the new price is:
+$148.55.                                                                        
+For inv ID: 9 old price is: $123.79. With an increase of 20% , the new price is:
+$148.55.                                                                        
+For inv ID: 10 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 11 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 12 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 13 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 14 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 15 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 16 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 17 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 18 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 19 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 20 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 21 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 22 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 23 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 24 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 25 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 26 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 27 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 28 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 29 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 30 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 31 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+For inv ID: 32 old price is: $123.79. With an increase of 20% , the new price   
+is: $148.55.                                                                    
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE L5Q4 (NEMP IN NUMBER) AS
+  2      -- STEP 1 DEFINE CURSOR
+  3      CURSOR HSAL_CUR IS
+  4          SELECT ENAME, SAL
+  5          FROM EMP
+  6          ORDER BY SAL DESC;
+  7      V_ENAME EMP.ENAME%TYPE;
+  8      V_SAL EMP.SAL%TYPE;
+  9      V_COUNT NUMBER(2) := 0;
+  10  BEGIN
+  11      -- STEP 2: OPEN CURSOR
+  12      OPEN HSAL_CUR;
+  13
+  14      -- STEP 3: FETCH
+  15      FETCH HSAL_CUR INTO V_ENAME, V_SAL;
+  16      IF HSAL_CUR%FOUND THEN
+  17          DBMS_OUTPUT.PUT_LINE('The top ' || nemp || ' employees are: ');
+  18      END IF;
+  19      WHILE HSAL_CUR%FOUND AND V_COUNT < NEMP LOOP
+  20          DBMS_OUTPUT.PUT_LINE('Employee: ' || V_ENAME || ' Salary: ' || V_SAL || '.');
+  21          V_COUNT := V_COUNT + 1;
+  22          -- STEP 3: FETCH
+  23          FETCH HSAL_CUR INTO V_ENAME, V_SAL;
+  24      END LOOP;
+  25
+  26      -- STEP 4: CLOSE CURSOR
+  27      CLOSE HSAL_CUR;
+  28  END;
+  29  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> EXEC L5Q4(2)
+
+The top 2 employees are:                                                        
+Employee: KING Salary: 5000.                                                    
+Employee: SCOTT Salary: 3000.                                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC L5Q4(5)
+
+The top 5 employees are:                                                        
+Employee: KING Salary: 5000.                                                    
+Employee: SCOTT Salary: 3000.                                                   
+Employee: FORD Salary: 3000.                                                    
+Employee: JONES Salary: 2975.                                                   
+Employee: BLAKE Salary: 2850.                                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Question 5:
+SQL> -- Modify question 4 to display ALL employees who make the top salary entered 
+SQL> -- Ex: SQL> exec L5Q5(2)
+SQL> -- SQL> Employee who make the top 2 salary are
+SQL> -- KING 5000
+SQL> -- FORD 3000 SCOTT 3000
+SQL> CREATE OR REPLACE PROCEDURE L5Q5(NHSAL IN NUMBER) AS
+  2      -- STEP 1 DEFINE CURSOR
+  3      CURSOR HSAL_CUR IS
+  4          SELECT ENAME, SAL
+  5          FROM EMP
+  6          WHERE SAL IN (
+  7              SELECT SAL FROM
+  8                  (SELECT DISTINCT SAL from EMP
+  9                      ORDER BY SAL DESC)
+  10              WHERE rownum <= NHSAL);
+  11      V_ENAME EMP.ENAME%TYPE;
+  12      V_SAL EMP.SAL%TYPE;
+  13
+  14  BEGIN
+  15
+  16      -- STEP 2: OPEN CURSOR
+  17      OPEN HSAL_CUR;
+  18
+  19      -- STEP 3: FETCH
+  20      FETCH HSAL_CUR INTO V_ENAME, V_SAL;
+  21      IF HSAL_CUR%FOUND THEN
+  22          DBMS_OUTPUT.PUT_LINE('Employee who make the top ' || NHSAL || ' salary are: ');
+  23      END IF;
+  24      WHILE HSAL_CUR%FOUND LOOP
+  25          DBMS_OUTPUT.PUT_LINE('Employee: ' || V_ENAME || ' Salary: ' || V_SAL || '.');
+  26          -- STEP 3: FETCH
+  27          FETCH HSAL_CUR INTO V_ENAME, V_SAL;
+  28      END LOOP;
+  29
+  30      -- STEP 4: CLOSE CURSOR
+  31      CLOSE HSAL_CUR;
+  32  END;
+  33  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> EXEC L5Q5(2)
+
+Employee who make the top 2 salary are:                                         
+Employee: KING Salary: 5000.                                                    
+Employee: SCOTT Salary: 3000.                                                   
+Employee: FORD Salary: 3000.                                                    
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC L5Q5(3)
+
+Employee who make the top 3 salary are:                                         
+Employee: KING Salary: 5000.                                                    
+Employee: SCOTT Salary: 3000.                                                   
+Employee: FORD Salary: 3000.                                                    
+Employee: JONES Salary: 2975.                                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> SPOOL OFF;
+

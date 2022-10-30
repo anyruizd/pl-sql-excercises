@@ -1,0 +1,425 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            30 October   Twenty Twenty-Two Sunday    01:58:02 Am
+
+SQL> -- Question 1:
+SQL> -- Run script 7northwoods in schemas des03
+SQL> -- Create a procedure to display all the faculty member 
+SQL> -- (f_id, f_last, f_first, f_rank), under each faculty member, display all the 
+SQL> -- student advised by that faculty member
+SQL> -- (s_id, s_last, s_first, birthdate, s_class).
+SQL> create or replace procedure l6q1 as
+  2      -- step 1: declare cursor
+  3      cursor fac_cur IS
+  4          select f_id, f_last, f_first, f_rank
+  5          from FACULTY;
+  6      v_fac_row fac_cur%ROWTYPE;
+  7      -- inner cursor with parameter step 1
+  8      cursor st_cur(p_f_id number) IS
+  9          select s_id, s_last, s_first, s_dob, s_class, f_id
+  10          from STUDENT
+  11          where f_id = p_f_id;
+  12      v_st_row st_cur%ROWTYPE;
+  13  BEGIN
+  14      -- step 2: open outer cursor
+  15      open fac_cur;
+  16
+  17      -- step 3: fetch outer cur
+  18      fetch fac_cur into v_fac_row;
+  19      while fac_cur%found loop
+  20          DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------');
+  21          DBMS_OUTPUT.PUT_LINE('Faculty member id: ' || v_fac_row.f_id || ' name is ' || v_fac_row.f_last
+  22              || ' ' || v_fac_row.f_first || ' and rank ' || v_fac_row.f_rank);
+  23          -- step 2: open inner cursor
+  24          open  st_cur(v_fac_row.f_id);
+  25          -- step 3: fetch with inner cursor
+  26          fetch st_cur into v_st_row;
+  27          while st_cur%found loop
+  28              DBMS_OUTPUT.PUT_LINE(' ' || 'Student number: ' || v_st_row.s_id || ' name: ' || v_st_row.s_last || ' ' || v_st_row.s_first || ' birthdate: ' ||
+  29                  v_st_row.s_dob || ' belongs to class ' || v_st_row.s_class);
+  30              fetch st_cur into v_st_row;
+  31          end loop;
+  32          -- step 4 close inner cursor
+  33          close st_cur;
+  34
+  35          fetch fac_cur into v_fac_row;
+  36      end loop;
+  37      close fac_cur;
+  38  end;
+  39  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec l6q1;
+
+------------------------------------------------------------------              
+Faculty member id: 1 name is Cox Kim and rank ASSO                              
+Student number: 1 name: Miller Sarah birthdate: 14-JUL-85 belongs to class SR   
+Student number: 2 name: Umato Brian birthdate: 19-AUG-85 belongs to class SR    
+Student number: 3 name: Black Daniel birthdate: 10-OCT-82 belongs to class JR   
+------------------------------------------------------------------              
+Faculty member id: 2 name is Blanchard John and rank FULL                       
+Student number: 4 name: Mobley Amanda birthdate: 24-SEP-86 belongs to class SO  
+------------------------------------------------------------------              
+Faculty member id: 3 name is Williams Jerry and rank ASST                       
+Student number: 6 name: Connoly Michael birthdate: 04-DEC-86 belongs to class FR
+------------------------------------------------------------------              
+Faculty member id: 4 name is Sheng Laura and rank INST                          
+Student number: 5 name: Sanchez Ruben birthdate: 20-NOV-86 belongs to class SO  
+------------------------------------------------------------------              
+Faculty member id: 5 name is Brown Philip and rank ASSO                         
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> create or replace procedure l6q2 as
+  2  -- step 1: define outer cursor
+  3      cursor cons_cur is
+  4          select c_id, c_last, c_first
+  5          from consultant;
+  6      v_cons_row cons_cur%ROWTYPE;
+  7  -- step 1: inner cursor with parameter
+  8      cursor skill_cur(p_c_id number) is
+  9          select skill_description, certification
+  10          from consultant_skill cs, skill sk
+  11          where c_id = p_c_id and cs.skill_id = sk.skill_id;
+  12      v_skill_row skill_cur%ROWTYPE;
+  13  begin
+  14      -- step 2: open outer cursor
+  15      open cons_cur;
+  16      -- step 3: fetch
+  17      fetch cons_cur into v_cons_row;
+  18      while cons_cur%found loop
+  19          DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------');
+  20          DBMS_OUTPUT.PUT_LINE('Consultant number ' || v_cons_row.c_id || ' is ' ||
+  21          v_cons_row.c_first || ' ' || v_cons_row.c_last);
+  22          DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------');
+  23              -- step 2: open inner cursor
+  24              open skill_cur(v_cons_row.c_id);
+  25              -- step 3: fetch inner cursor
+  26              fetch skill_cur into v_skill_row;
+  27              while skill_cur%found loop
+  28                  DBMS_OUTPUT.PUT_LINE('Skill: ' || v_skill_row.skill_description || ' cerfied: ' || v_skill_row.certification);
+  29              fetch skill_cur into v_skill_row;
+  30              end loop;
+  31              -- step 4 close inner cursor
+  32              close skill_cur;
+  33          fetch cons_cur into v_cons_row;
+  34      end loop;
+  35      -- step 4: close outer cursor
+  36      close cons_cur;
+  37  end;
+  38  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec l6q2;
+
+------------------------------------------------------------------              
+Consultant number 100 is Mark Myers                                             
+------------------------------------------------------------------              
+Skill: VB .NET Programming cerfied: Y                                           
+Skill: Java Programming cerfied: Y                                              
+Skill: Project Management cerfied: Y                                            
+Skill: Oracle Developer Programming cerfied: Y                                  
+------------------------------------------------------------------              
+Consultant number 101 is Sheila Hernandez                                       
+------------------------------------------------------------------              
+Skill: Project Management cerfied: N                                            
+Skill: Web Application Programming cerfied: N                                   
+------------------------------------------------------------------              
+Consultant number 102 is Brian Zhang                                            
+------------------------------------------------------------------              
+Skill: Oracle Database Administration cerfied: Y                                
+------------------------------------------------------------------              
+Consultant number 103 is Sarah Carlson                                          
+------------------------------------------------------------------              
+Skill: VB .NET Programming cerfied: N                                           
+Skill: Oracle Developer Programming cerfied: N                                  
+Skill: Windows NT/2000 Network Administration cerfied: N                        
+Skill: Windows XP Network Administration cerfied: N                             
+------------------------------------------------------------------              
+Consultant number 104 is Paul Courtlandt                                        
+------------------------------------------------------------------              
+Skill: Windows NT/2000 Network Administration cerfied: N                        
+Skill: Windows XP Network Administration cerfied: Y                             
+------------------------------------------------------------------              
+Consultant number 105 is Janet Park                                             
+------------------------------------------------------------------              
+Skill: COBOL Programming cerfied: N                                             
+Skill: Java Programming cerfied: N                                              
+Skill: Project Management cerfied: Y                                            
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> create or replace procedure l6q3 as
+  2      -- step 1: declare cursor
+  3      cursor item_cur IS
+  4          select item_id, item_desc, cat_id
+  5          from ITEM;
+  6      v_item_row item_cur%ROWTYPE;
+  7      -- inner cursor with parameter step 1
+  8      cursor inv_cur(p_item_id number) IS
+  9          select inv_id, item_id, inv_qoh, inv_price
+  10          from INVENTORY
+  11          where item_id = p_item_id;
+  12      v_inv_row inv_cur%ROWTYPE;
+  13
+  14  BEGIN
+  15
+  16      -- step 2: open outer cursor
+  17      open item_cur;
+  18
+  19      -- step 3: fetch outer cur
+  20      fetch item_cur into v_item_row;
+  21      while item_cur%found loop
+  22          DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------');
+  23          DBMS_OUTPUT.PUT_LINE('Item id: ' || v_item_row.item_id || ' description: ' || v_item_row.item_desc || ' category id: ' || v_item_row.cat_id);
+  24          -- step 2: open inner cursor
+  25          open  inv_cur(v_item_row.item_id);
+  26          -- step 3: fetch with inner cursor
+  27          fetch inv_cur into v_inv_row;
+  28          while inv_cur%found loop
+  29              DBMS_OUTPUT.PUT_LINE('Inventory number: ' || v_inv_row.inv_id || ' item id: ' || v_inv_row.item_id || ' quantity: ' || v_inv_row.inv_qoh || ' price: ' ||
+  30                  v_inv_row.inv_price);
+  31              fetch inv_cur into v_inv_row;
+  32          end loop;
+  33          -- step 4 close inner cursor
+  34          close inv_cur;
+  35
+  36          fetch item_cur into v_item_row;
+  37      end loop;
+  38      close item_cur;
+  39  end;
+  40  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec l6q3;
+
+------------------------------------------------------------------              
+Item id: 1 description: Men's Expedition Parka category id: 3                   
+Inventory number: 23 item id: 1 quantity: 114 price: 148.55                     
+Inventory number: 24 item id: 1 quantity: 17 price: 148.55                      
+Inventory number: 25 item id: 1 quantity: 0 price: 148.55                       
+Inventory number: 26 item id: 1 quantity: 12 price: 148.55                      
+------------------------------------------------------------------              
+Item id: 2 description: 3-Season Tent category id: 4                            
+Inventory number: 1 item id: 2 quantity: 16 price: 148.55                       
+Inventory number: 2 item id: 2 quantity: 12 price: 148.55                       
+------------------------------------------------------------------              
+Item id: 3 description: Women's Hiking Shorts category id: 1                    
+Inventory number: 3 item id: 3 quantity: 150 price: 148.55                      
+Inventory number: 4 item id: 3 quantity: 147 price: 148.55                      
+Inventory number: 5 item id: 3 quantity: 0 price: 148.55                        
+Inventory number: 6 item id: 3 quantity: 139 price: 148.55                      
+Inventory number: 7 item id: 3 quantity: 137 price: 148.55                      
+Inventory number: 8 item id: 3 quantity: 115 price: 148.55                      
+------------------------------------------------------------------              
+Item id: 4 description: Women's Fleece Pullover category id: 1                  
+Inventory number: 9 item id: 4 quantity: 135 price: 148.55                      
+Inventory number: 10 item id: 4 quantity: 168 price: 148.55                     
+Inventory number: 11 item id: 4 quantity: 187 price: 148.55                     
+Inventory number: 12 item id: 4 quantity: 0 price: 148.55                       
+Inventory number: 13 item id: 4 quantity: 124 price: 148.55                     
+Inventory number: 14 item id: 4 quantity: 112 price: 148.55                     
+------------------------------------------------------------------              
+Item id: 5 description: Children's Beachcomber Sandals category id: 2           
+Inventory number: 15 item id: 5 quantity: 121 price: 148.55                     
+Inventory number: 16 item id: 5 quantity: 111 price: 148.55                     
+Inventory number: 17 item id: 5 quantity: 113 price: 148.55                     
+Inventory number: 18 item id: 5 quantity: 121 price: 148.55                     
+Inventory number: 19 item id: 5 quantity: 148 price: 148.55                     
+Inventory number: 20 item id: 5 quantity: 137 price: 148.55                     
+Inventory number: 21 item id: 5 quantity: 134 price: 148.55                     
+Inventory number: 22 item id: 5 quantity: 123 price: 148.55                     
+------------------------------------------------------------------              
+Item id: 6 description: Boy's Surf Shorts category id: 2                        
+Inventory number: 27 item id: 6 quantity: 50 price: 148.55                      
+Inventory number: 28 item id: 6 quantity: 100 price: 148.55                     
+Inventory number: 29 item id: 6 quantity: 100 price: 148.55                     
+------------------------------------------------------------------              
+Item id: 7 description: Girl's Soccer Tee category id: 2                        
+Inventory number: 30 item id: 7 quantity: 100 price: 148.55                     
+Inventory number: 31 item id: 7 quantity: 100 price: 148.55                     
+Inventory number: 32 item id: 7 quantity: 100 price: 148.55                     
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Question 4: 
+SQL> -- Modify question 3 to display beside the item description the value of the 
+SQL> -- item (value = inv_price * inv_qoh).
+SQL> create or replace procedure l6q4 as
+  2      -- step 1: declare cursor
+  3      cursor item_cur IS
+  4          select item_id, item_desc, cat_id
+  5          from ITEM;
+  6      v_item_row item_cur%ROWTYPE;
+  7      -- inner cursor with parameter step 1
+  8      cursor inv_cur(p_item_id number) IS
+  9          select inv_id, item_id, inv_qoh, inv_price
+  10          from INVENTORY
+  11          where item_id = p_item_id;
+  12      v_inv_row inv_cur%ROWTYPE;
+  13
+  14  BEGIN
+  15          -- step 2: open outer cursor
+  16          open item_cur;
+  17
+  18          -- step 3: fetch outer cur
+  19          fetch item_cur into v_item_row;
+  20          while item_cur%found loop
+  21              DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------');
+  22              DBMS_OUTPUT.PUT_LINE('Item id: ' || v_item_row.item_id || ' description: ' || v_item_row.item_desc || ' category id: ' || v_item_row.cat_id);
+  23              -- step 2: open inner cursor
+  24              open  inv_cur(v_item_row.item_id);
+  25              -- step 3: fetch with inner cursor
+  26              fetch inv_cur into v_inv_row;
+  27              while inv_cur%found loop
+  28                  DBMS_OUTPUT.PUT_LINE('Inventory number: ' || v_inv_row.inv_id || ' item id: ' || v_inv_row.item_id || ' quantity: ' || v_inv_row.inv_qoh || ' price: ' ||
+  29                      v_inv_row.inv_price || ' value: ' || v_inv_row.inv_qoh * v_inv_row.inv_price);
+  30                  fetch inv_cur into v_inv_row;
+  31              end loop;
+  32              -- step 4 close inner cursor
+  33              close inv_cur;
+  34
+  35              fetch item_cur into v_item_row;
+  36          end loop;
+  37          close item_cur;
+  38  end;
+  39  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec l6q4;
+
+------------------------------------------------------------------              
+Item id: 1 description: Men's Expedition Parka category id: 3                   
+Inventory number: 23 item id: 1 quantity: 114 price: 148.55 value: 16934.7      
+Inventory number: 24 item id: 1 quantity: 17 price: 148.55 value: 2525.35       
+Inventory number: 25 item id: 1 quantity: 0 price: 148.55 value: 0              
+Inventory number: 26 item id: 1 quantity: 12 price: 148.55 value: 1782.6        
+------------------------------------------------------------------              
+Item id: 2 description: 3-Season Tent category id: 4                            
+Inventory number: 1 item id: 2 quantity: 16 price: 148.55 value: 2376.8         
+Inventory number: 2 item id: 2 quantity: 12 price: 148.55 value: 1782.6         
+------------------------------------------------------------------              
+Item id: 3 description: Women's Hiking Shorts category id: 1                    
+Inventory number: 3 item id: 3 quantity: 150 price: 148.55 value: 22282.5       
+Inventory number: 4 item id: 3 quantity: 147 price: 148.55 value: 21836.85      
+Inventory number: 5 item id: 3 quantity: 0 price: 148.55 value: 0               
+Inventory number: 6 item id: 3 quantity: 139 price: 148.55 value: 20648.45      
+Inventory number: 7 item id: 3 quantity: 137 price: 148.55 value: 20351.35      
+Inventory number: 8 item id: 3 quantity: 115 price: 148.55 value: 17083.25      
+------------------------------------------------------------------              
+Item id: 4 description: Women's Fleece Pullover category id: 1                  
+Inventory number: 9 item id: 4 quantity: 135 price: 148.55 value: 20054.25      
+Inventory number: 10 item id: 4 quantity: 168 price: 148.55 value: 24956.4      
+Inventory number: 11 item id: 4 quantity: 187 price: 148.55 value: 27778.85     
+Inventory number: 12 item id: 4 quantity: 0 price: 148.55 value: 0              
+Inventory number: 13 item id: 4 quantity: 124 price: 148.55 value: 18420.2      
+Inventory number: 14 item id: 4 quantity: 112 price: 148.55 value: 16637.6      
+------------------------------------------------------------------              
+Item id: 5 description: Children's Beachcomber Sandals category id: 2           
+Inventory number: 15 item id: 5 quantity: 121 price: 148.55 value: 17974.55     
+Inventory number: 16 item id: 5 quantity: 111 price: 148.55 value: 16489.05     
+Inventory number: 17 item id: 5 quantity: 113 price: 148.55 value: 16786.15     
+Inventory number: 18 item id: 5 quantity: 121 price: 148.55 value: 17974.55     
+Inventory number: 19 item id: 5 quantity: 148 price: 148.55 value: 21985.4      
+Inventory number: 20 item id: 5 quantity: 137 price: 148.55 value: 20351.35     
+Inventory number: 21 item id: 5 quantity: 134 price: 148.55 value: 19905.7      
+Inventory number: 22 item id: 5 quantity: 123 price: 148.55 value: 18271.65     
+------------------------------------------------------------------              
+Item id: 6 description: Boy's Surf Shorts category id: 2                        
+Inventory number: 27 item id: 6 quantity: 50 price: 148.55 value: 7427.5        
+Inventory number: 28 item id: 6 quantity: 100 price: 148.55 value: 14855        
+Inventory number: 29 item id: 6 quantity: 100 price: 148.55 value: 14855        
+------------------------------------------------------------------              
+Item id: 7 description: Girl's Soccer Tee category id: 2                        
+Inventory number: 30 item id: 7 quantity: 100 price: 148.55 value: 14855        
+Inventory number: 31 item id: 7 quantity: 100 price: 148.55 value: 14855        
+Inventory number: 32 item id: 7 quantity: 100 price: 148.55 value: 14855        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> create or replace procedure l6q5(p_cons_id number, p_char char) as
+  2      -- step 1: declare cursor
+  3      cursor cons_cur IS
+  4          select c_id, c_first, c_last, c_phone, c_email
+  5          from CONSULTANT
+  6          where c_id = p_cons_id;
+  7      v_cons_row cons_cur%ROWTYPE;
+  8      -- inner cursor with parameter step 1
+  9      cursor skill_cur(p_cons_id number) IS
+  10          select cs.skill_id, skill_description, certification
+  11          from consultant_skill cs, skill sk
+  12          where c_id = p_cons_id and cs.skill_id = sk.skill_id
+  13          FOR UPDATE OF certification;
+  14      v_skill_row skill_cur%ROWTYPE;
+  15
+  16  BEGIN
+  17      -- step 2: open outer cursor
+  18      open cons_cur;
+  19      -- step 3: fetch outer cur
+  20      fetch cons_cur into v_cons_row;
+  21      while cons_cur%found loop
+  22          DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------');
+  23          DBMS_OUTPUT.PUT_LINE('Consultant id: ' || v_cons_row.c_id || '. Full name: ' || v_cons_row.c_first || ' ' || v_cons_row.c_last || '. Phone: ' ||
+  24              v_cons_row.c_phone || '. Email: ' || v_cons_row.c_email);
+  25          -- step 2: open inner cursor
+  26          open  skill_cur(p_cons_id);
+  27          -- step 3: fetch with inner cursor
+  28          fetch skill_cur into v_skill_row;
+  29          while skill_cur%found loop
+  30              DBMS_OUTPUT.PUT_LINE('Skill: ' || v_skill_row.skill_description || '. Certified: ' || v_skill_row.certification || '. New status: ' || p_char);
+  31              update CONSULTANT_SKILL
+  32              set certification = p_char
+  33              where current of skill_cur;
+  34              fetch skill_cur into v_skill_row;
+  35          end loop;
+  36          -- step 4 close inner cursor
+  37          close skill_cur;
+  38      fetch cons_cur into v_cons_row;
+  39      end loop;
+  40      -- step 4: close outer cursor
+  41      close cons_cur;
+  42  --commit;
+  43  end;
+  44  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec l6q5(101, 'Y');
+
+------------------------------------------------------------------              
+Consultant id: 101. Full name: Sheila Hernandez. Phone: 7155550282. Email:      
+shernandez@earthware.com                                                        
+Skill: Project Management. Certified: N. New status: Y                          
+Skill: Web Application Programming. Certified: N. New status: Y                 
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> SPOOL off;
+

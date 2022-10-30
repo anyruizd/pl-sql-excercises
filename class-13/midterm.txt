@@ -1,0 +1,362 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            26 October   Twenty Twenty-Two Wednesday 09:41:53 Pm
+
+SQL> -- Question 1
+SQL> -- A
+SQL> CREATE OR REPLACE FUNCTION any_ruiz_f1 (p_date IN DATE)
+  2  RETURN NUMBER AS
+  3  	v_sysdate DATE;
+  4      v_age NUMBER;
+  5  BEGIN
+  6      SELECT SYSDATE INTO v_sysdate FROM DUAL;
+  7      v_age := FLOOR((v_sysdate - p_date) / 365);
+  8      RETURN v_age;
+  9  END;
+  10  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> -- B
+SQL> SELECT any_ruiz_f1(TO_DATE('5 Jan 2017')) as result from DUAL;
+
+    RESULT
+----------
+         5
+
+SQL> -- C
+SQL> CREATE OR REPLACE PROCEDURE any_ruiz_p1(P_SID NUMBER, P_CSEC_ID NUMBER, P_GRADE CHAR) AS
+  2      V_SID STUDENT.S_ID%TYPE;
+  3      V_CSEC_ID COURSE_SECTION.C_SEC_ID%TYPE;
+  4      V_GRADE ENROLLMENT.GRADE%TYPE;
+  5      V_SFNAME STUDENT.S_FIRST%TYPE;
+  6      V_SLNAME STUDENT.S_LAST%TYPE;
+  7      V_DOB STUDENT.S_DOB%TYPE;
+  8      V_AGE NUMBER;
+  9      V_EXC NUMBER;
+  10  BEGIN
+  11      -- VERIFY S_ID EXISTS IN STUDENT
+  12      V_EXC := 1;
+  13      SELECT S_ID, S_FIRST, S_LAST, S_DOB
+  14      INTO V_SID, V_SFNAME, V_SLNAME, V_DOB
+  15      FROM STUDENT
+  16      WHERE S_ID = P_SID;
+  17
+  18      -- VERIFY C_SEC_ID EXISTS IN COURSE_SECTION
+  19      V_EXC := 2;
+  20      SELECT C_SEC_ID
+  21      INTO V_CSEC_ID
+  22      FROM COURSE_SECTION
+  23      WHERE C_SEC_ID = P_CSEC_ID;
+  24
+  25      -- VERIFY COMBINATION EXISTS IN ENROLLMENT
+  26      V_EXC := 3;
+  27      SELECT C_SEC_ID, S_ID, GRADE
+  28      INTO V_CSEC_ID, V_SID, V_GRADE
+  29      FROM ENROLLMENT
+  30      WHERE C_SEC_ID = P_CSEC_ID AND S_ID = P_SID;
+  31
+  32      -- IF COMBINATION EXISTS, CHECK IF IT'S NECESSARY TO UPDATE  GRADE
+  33      IF V_GRADE = P_GRADE THEN
+  34          DBMS_OUTPUT.PUT_LINE('Student ID ' || P_SID || ' found, no update needed!');
+  35      ELSE
+  36          DBMS_OUTPUT.PUT_LINE('Student ID ' || P_SID || ' found, update needed!');
+  37          UPDATE ENROLLMENT SET GRADE = P_GRADE WHERE S_ID = P_SID;
+  38          DBMS_OUTPUT.PUT_LINE('Student ID ' || P_SID || ' grade was updated!');
+  39          -- COMMIT;
+  40      END IF;
+  41
+  42      V_AGE := any_ruiz_f1(V_DOB);
+  43
+  44      DBMS_OUTPUT.PUT_LINE('Student ' || V_SFNAME || ' ' || V_SLNAME
+  45              || ' birthdate is ' || V_DOB
+  46              || ' and is ' || V_AGE || ' years old.');
+  47
+  48      EXCEPTION
+  49      WHEN NO_DATA_FOUND THEN
+  50          IF V_EXC = 1 THEN -- S_ID DOES NOT EXIST
+  51              DBMS_OUTPUT.PUT_LINE('Student ID ' || P_SID || ' does not exist, please add it first!');
+  52          ELSIF V_EXC = 2 THEN -- SKILL_ID DOES NOT EXIST
+  53              DBMS_OUTPUT.PUT_LINE('Course section ' || P_CSEC_ID || ' does not exist, please add it first!');
+  54          ELSIF V_EXC = 3 THEN -- COMBINATION DOES NOT EXIST
+  55              DBMS_OUTPUT.PUT_LINE('Student ID ' || P_SID || ' is not enrolled in  course section' || P_CSEC_ID|| ' please add it first!');
+  56          END IF;
+  57  END;
+  58  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> -- S_ID DOES NOT EXIST
+SQL> EXEC any_ruiz_p1(7, 1, 'A')
+
+Student ID 7 does not exist, please add it first!                               
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- C_SEC_ID DOES NOT EXIST
+SQL> EXEC any_ruiz_p1(6, 14, 'A')
+
+Course section 14 does not exist, please add it first!                          
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Combinaton DOES NOT EXIST
+SQL> EXEC any_ruiz_p1(1, 13, 'A')
+
+Student ID 1 is not enrolled in  course section13 please add it first!          
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Combination exists and grade is updated
+SQL> EXEC any_ruiz_p1(2, 1, 'A')
+
+Student ID 2 found, no update needed!                                           
+Student Brian Umato birthdate is 19-AUG-85 and is 37 years old.                 
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Combination exists and grade is not updated
+SQL> EXEC any_ruiz_p1(1, 1, 'A')
+
+Student ID 1 found, no update needed!                                           
+Student Sarah Miller birthdate is 14-JUL-85 and is 37 years old.                
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- Question 2
+SQL> SELECT * FROM FACULTY;
+
+      F_ID F_LAST                         F_FIRST                        F_MI  
+---------- ------------------------------ ------------------------------ ------
+    LOC_ID F_PHONE    F_RANK        F_PIN
+---------- ---------- -------- ----------
+F_IMAGE                                                                         
+--------------------------------------------------------------------------------
+         1 Cox                            Kim                            J     
+         9 7155551234 ASSO           1181
+                                                                                
+         2 Blanchard                      John                           R     
+        10 7155559087 FULL           1075
+                                                                                
+         3 Williams                       Jerry                          F     
+        12 7155555412 ASST           8531
+                                                                                
+         4 Sheng                          Laura                          M     
+        11 7155556409 INST           1690
+                                                                                
+         5 Brown                          Philip                         E     
+        13 7155556082 ASSO           9899
+                                                                                
+
+SQL> SELECT * FROM LOCATION;
+
+    LOC_ID BLDG_CODE  ROOM     CAPACITY
+---------- ---------- ------ ----------
+         1 CR         101           150
+         2 CR         202            40
+         3 CR         103            35
+         4 CR         105            35
+         5 BUS        105            42
+         6 BUS        404            35
+         7 BUS        421            35
+         8 BUS        211            55
+         9 BUS        424             1
+        10 BUS        402             1
+        11 BUS        433             1
+        12 LIB        217             2
+        13 LIB        222             1
+
+SQL> SELECT * FROM COURSE_SECTION;
+
+  C_SEC_ID  COURSE_ID    TERM_ID    SEC_NUM       F_ID C_SEC_DAY 
+---------- ---------- ---------- ---------- ---------- ----------
+     C_SEC_TIME C_SEC_DURATION                     LOC_ID   MAX_ENRL
+--------------- ------------------------------ ---------- ----------
+         1          1          4          1          2 MWF       
+      01-OCT-22 0 00:00:50.00                           1        140
+         2          1          4          2          3 TR        
+      01-OCT-22 0 00:01:15.00                           7         35
+         3          1          4          3          3 MWF       
+      01-OCT-22 0 00:00:50.00                           2         35
+         4          2          4          1          4 TR        
+      01-OCT-22 0 00:01:15.00                           6         35
+         5          2          5          2          4 TR        
+      01-OCT-22 0 00:01:15.00                           6         35
+         6          3          5          1          1 MWF       
+      01-OCT-22 0 00:00:50.00                           5         30
+         7          3          5          2          1 MWF       
+      01-OCT-22 0 00:00:50.00                           5         30
+         8          4          5          1          5 TR        
+      01-OCT-22 0 00:01:15.00                           3         35
+         9          5          5          1          2 MWF       
+      01-OCT-22 0 00:00:50.00                           5         35
+        10          5          5          2          2 MWF       
+      01-OCT-22 0 00:00:50.00                           5         35
+        11          1          6          1          1 MTWRF     
+      01-OCT-22 0 00:01:30.00                           1         50
+        12          2          6          1          2 MTWRF     
+      01-OCT-22 0 00:01:30.00                           6         35
+        13          3          6          1          3 MTWRF     
+      01-OCT-22 0 00:01:30.00                           5         35
+
+SQL> SELECT * FROM COURSE;
+
+ COURSE_ID CALL_ID    COURSE_NAME                  CREDITS
+---------- ---------- ------------------------- ----------
+         1 MIS 101    Intro. to Info. Systems            3
+         2 MIS 301    Systems Analysis                   3
+         3 MIS 441    Database Management                3
+         4 CS 155     Programming in C++                 3
+         5 MIS 451    Web-Based Systems                  3
+
+SQL> -- we need to see all the teachers (faculty member) and their course given. Create a procedure called
+SQL> -- any_ruiz_p2 to display all faculty members (f_id, f_last, f_first, f_rank).
+SQL> -- Under each faculty member display his/her course  section given including the location of the course
+SQL> -- section (c_sec_id, course name, bldg_code, room)
+SQL> select C_SEC_ID, COURSE_NAME
+  2  FROM COURSE_SECTION CS
+  3  join COURSE C on CS.COURSE_ID = C.COURSE_ID
+  4
+  5
+  6  CREATE OR REPLACE PROCEDURE any_ruiz_p2 AS
+  7
+  8      -- STEP 1 DECLARE CURSOR
+  9      CURSOR fac_cur IS
+  10          SELECT F_ID, F_LAST, F_FIRST, F_RANK
+  11          FROM FACULTY;
+
+CREATE OR REPLACE PROCEDURE any_ruiz_p2 AS
+ *
+ERROR at line 107:
+ORA-00933: SQL command not properly ended
+SQL> -- STEP 2 DECLARE INNER CURSOR WITH PARAMETER
+SQL> CURSOR c_course (p_f_id IN FACULTY.F_ID%TYPE) IS
+ERROR at line 115:
+unknown command beginning "CURSOR c_..." - rest of line ignored.
+SQL> SELECT C.COURSE_NAME, CS.C_SEC_ID, LO.BLDG_CODE, LO.ROOM
+  2          FROM COURSE C, COURSE_SECTION CS, LOCATION LO
+  3          WHERE C.COURSE_ID = CS.COURSE_ID AND CS.F_ID = p_f_id;
+
+        WHERE C.COURSE_ID = CS.COURSE_ID AND CS.F_ID = p_f_id
+                                                        *
+ERROR at line 118:
+ORA-00904: "P_F_ID": invalid identifier
+SQL> V_FID FACULTY.F_ID%TYPE;
+ERROR at line 119:
+unknown command beginning "V_FID FAC..." - rest of line ignored.
+SQL> V_FLNAME FACULTY.F_LAST%TYPE;
+ERROR at line 120:
+unknown command beginning "V_FLNAME ..." - rest of line ignored.
+SQL> V_FFNAME FACULTY.F_FIRST%TYPE;
+ERROR at line 121:
+unknown command beginning "V_FFNAME ..." - rest of line ignored.
+SQL> V_FRANK FACULTY.F_RANK%TYPE;
+ERROR at line 122:
+unknown command beginning "V_FRANK F..." - rest of line ignored.
+SQL> V_CSECID COURSE_SECTION.C_SEC_ID%TYPE;
+ERROR at line 123:
+unknown command beginning "V_CSECID ..." - rest of line ignored.
+SQL> V_COURSENAME COURSE.COURSE_NAME%TYPE;
+ERROR at line 124:
+unknown command "V_COURSEN..." - rest of line ignored.
+SQL> V_BLDGCODE LOCATION.BLDG_CODE%TYPE;
+ERROR at line 125:
+unknown command "V_BLDGCOD..." - rest of line ignored.
+SQL> V_ROOM LOCATION.ROOM%TYPE;
+ERROR at line 126:
+unknown command beginning "V_ROOM LO..." - rest of line ignored.
+SQL> BEGIN
+  2      OPEN fac_cur;
+  3
+  4      FETCH fac_cur INTO V_FID, V_FLNAME, V_FFNAME, V_FRANK;
+  5      WHILE fac_cur%FOUND LOOP
+  6          DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------');
+  7          DBMS_OUTPUT.PUT_LINE('Faculty member id: ' || V_FID || ' Full Name: ' || V_FLNAME || ' ' || V_FFNAME || ' Rank: ' || V_FRANK);
+  8          DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------');
+  9          OPEN c_course(V_FID);
+  10          FETCH c_course INTO V_COURSENAME, V_CSECID, V_BLDGCODE, V_ROOM;
+  11          WHILE c_course%FOUND LOOP
+  12              DBMS_OUTPUT.PUT_LINE('Course Name: ' || V_COURSENAME || ' Course Section ID: ' || V_CSECID || ' Building Code: ' || V_BLDGCODE || ' Room: ' || V_ROOM);
+  13              FETCH c_course INTO V_COURSENAME, V_CSECID, V_BLDGCODE, V_ROOM;
+  14          END LOOP;
+  15          CLOSE c_course;
+  16      FETCH fac_cur INTO V_FID, V_FLNAME, V_FFNAME, V_FRANK;
+  17      END LOOP;
+  18      CLOSE fac_cur;
+  19  END;
+  20
+  21  EXEC any_ruiz_p2
+  22
+  23  SPOOL OFF;
+
+EXEC any_ruiz_p2
+ *
+ERROR at line 148:
+ORA-06550: line 21, column 1:
+PLS-00103: Encountered the symbol "EXEC"
+SQL> CREATE OR REPLACE PROCEDURE any_ruiz_p2 AS
+  2      -- STEP 1 DECLARE CURSOR
+  3      CURSOR fac_cur IS
+  4          SELECT F_ID, F_LAST, F_FIRST, F_RANK
+  5          FROM FACULTY;
+  6
+  7      -- STEP 2 DECLARE INNER CURSOR WITH PARAMETER
+  8      CURSOR c_course (p_f_id IN FACULTY.F_ID%TYPE) IS
+  9          SELECT C.COURSE_NAME, CS.C_SEC_ID, LO.BLDG_CODE, LO.ROOM
+  10          FROM COURSE C, COURSE_SECTION CS, LOCATION LO
+  11          WHERE C.COURSE_ID = CS.COURSE_ID AND CS.F_ID = p_f_id;
+  12      V_FID FACULTY.F_ID%TYPE;
+  13      V_FLNAME FACULTY.F_LAST%TYPE;
+  14      V_FFNAME FACULTY.F_FIRST%TYPE;
+  15      V_FRANK FACULTY.F_RANK%TYPE;
+  16      V_CSECID COURSE_SECTION.C_SEC_ID%TYPE;
+  17      V_COURSENAME COURSE.COURSE_NAME%TYPE;
+  18      V_BLDGCODE LOCATION.BLDG_CODE%TYPE;
+  19      V_ROOM LOCATION.ROOM%TYPE;
+  20
+  21  BEGIN
+  22      OPEN fac_cur;
+  23
+  24      FETCH fac_cur INTO V_FID, V_FLNAME, V_FFNAME, V_FRANK;
+  25      WHILE fac_cur%FOUND LOOP
+  26          DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------');
+  27          DBMS_OUTPUT.PUT_LINE('Faculty member id: ' || V_FID || ' Full Name: ' || V_FLNAME || ' ' || V_FFNAME || ' Rank: ' || V_FRANK);
+  28          DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------');
+  29          OPEN c_course(V_FID);
+  30          FETCH c_course INTO V_COURSENAME, V_CSECID, V_BLDGCODE, V_ROOM;
+  31          WHILE c_course%FOUND LOOP
+  32              DBMS_OUTPUT.PUT_LINE('Course Name: ' || V_COURSENAME || ' Course Section ID: ' || V_CSECID || ' Building Code: ' || V_BLDGCODE || ' Room: ' || V_ROOM);
+  33              FETCH c_course INTO V_COURSENAME, V_CSECID, V_BLDGCODE, V_ROOM;
+  34          END LOOP;
+  35          CLOSE c_course;
+  36      FETCH fac_cur INTO V_FID, V_FLNAME, V_FFNAME, V_FRANK;
+  37      END LOOP;
+  38      CLOSE fac_cur;
+  39  END;
+  40
+  41  EXEC any_ruiz_p2
+  42
+  43  SPOOL OFF;
+
+ORA-24344: success with compilation error
+PROCEDURE created.
+
+Commit complete.
+
