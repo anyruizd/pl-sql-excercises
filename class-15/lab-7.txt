@@ -1,0 +1,335 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            10 November  Twenty Twenty-Two Thursday  02:19:58 Am
+
+SQL> /* Question 1:
+  2      Run script 7northwoods in schemas des03
+  3      Using CURSOR FOR LOOP syntax 1 in a procedure to display all the faculty
+  4      member (f_id, f_last, f_first, f_rank), under each faculty member, display
+  5      all the student advised by that faculty member
+  6      (s_id, s_last, s_first, birthdate, s_class).
+  7  */
+SQL> create or replace procedure l7q1 as
+  2      cursor fac_cur is
+  3      select f_id, f_last, f_first, f_rank
+  4      from faculty;
+  5
+  6      cursor st_cur(p_fid number)is
+  7      select s_id, s_last, s_first, s_dob, s_class
+  8      from student;
+  9  begin
+  10      for f in fac_cur loop
+  11          dbms_output.put_line('---------------------------------------------------');
+  12          dbms_output.put_line('Faculty member id ' || f.f_id || ' is ' || f.f_first || ' ' || f.f_last || ', with rank ' || f.f_rank || '. Advises the following students: ');
+  13          for st in st_cur(f.f_id) loop
+  14              dbms_output.put_line('- Student id: ' || st.s_id || '. Fullname: ' || st.s_first || ' ' || st.s_last || '. Birthdate: ' || st.s_dob || '. Class: ' || st.s_class);
+  15          end loop;
+  16      end loop;
+  17  end;
+  18  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec l7q1;
+
+---------------------------------------------------                             
+Faculty member id 1 is Kim Cox, with rank ASSO. Advises the following students: 
+- Student id: 1. Fullname: Sarah Miller. Birthdate: 14-JUL-85. Class: SR        
+- Student id: 2. Fullname: Brian Umato. Birthdate: 19-AUG-85. Class: SR         
+- Student id: 3. Fullname: Daniel Black. Birthdate: 10-OCT-82. Class: JR        
+- Student id: 4. Fullname: Amanda Mobley. Birthdate: 24-SEP-86. Class: SO       
+- Student id: 5. Fullname: Ruben Sanchez. Birthdate: 20-NOV-86. Class: SO       
+- Student id: 6. Fullname: Michael Connoly. Birthdate: 04-DEC-86. Class: FR     
+---------------------------------------------------                             
+Faculty member id 2 is John Blanchard, with rank FULL. Advises the following    
+students:                                                                       
+- Student id: 1. Fullname: Sarah Miller. Birthdate: 14-JUL-85. Class: SR        
+- Student id: 2. Fullname: Brian Umato. Birthdate: 19-AUG-85. Class: SR         
+- Student id: 3. Fullname: Daniel Black. Birthdate: 10-OCT-82. Class: JR        
+- Student id: 4. Fullname: Amanda Mobley. Birthdate: 24-SEP-86. Class: SO       
+- Student id: 5. Fullname: Ruben Sanchez. Birthdate: 20-NOV-86. Class: SO       
+- Student id: 6. Fullname: Michael Connoly. Birthdate: 04-DEC-86. Class: FR     
+---------------------------------------------------                             
+Faculty member id 3 is Jerry Williams, with rank ASST. Advises the following    
+students:                                                                       
+- Student id: 1. Fullname: Sarah Miller. Birthdate: 14-JUL-85. Class: SR        
+- Student id: 2. Fullname: Brian Umato. Birthdate: 19-AUG-85. Class: SR         
+- Student id: 3. Fullname: Daniel Black. Birthdate: 10-OCT-82. Class: JR        
+- Student id: 4. Fullname: Amanda Mobley. Birthdate: 24-SEP-86. Class: SO       
+- Student id: 5. Fullname: Ruben Sanchez. Birthdate: 20-NOV-86. Class: SO       
+- Student id: 6. Fullname: Michael Connoly. Birthdate: 04-DEC-86. Class: FR     
+---------------------------------------------------                             
+Faculty member id 4 is Laura Sheng, with rank INST. Advises the following       
+students:                                                                       
+- Student id: 1. Fullname: Sarah Miller. Birthdate: 14-JUL-85. Class: SR        
+- Student id: 2. Fullname: Brian Umato. Birthdate: 19-AUG-85. Class: SR         
+- Student id: 3. Fullname: Daniel Black. Birthdate: 10-OCT-82. Class: JR        
+- Student id: 4. Fullname: Amanda Mobley. Birthdate: 24-SEP-86. Class: SO       
+- Student id: 5. Fullname: Ruben Sanchez. Birthdate: 20-NOV-86. Class: SO       
+- Student id: 6. Fullname: Michael Connoly. Birthdate: 04-DEC-86. Class: FR     
+---------------------------------------------------                             
+Faculty member id 5 is Philip Brown, with rank ASSO. Advises the following      
+students:                                                                       
+- Student id: 1. Fullname: Sarah Miller. Birthdate: 14-JUL-85. Class: SR        
+- Student id: 2. Fullname: Brian Umato. Birthdate: 19-AUG-85. Class: SR         
+- Student id: 3. Fullname: Daniel Black. Birthdate: 10-OCT-82. Class: JR        
+- Student id: 4. Fullname: Amanda Mobley. Birthdate: 24-SEP-86. Class: SO       
+- Student id: 5. Fullname: Ruben Sanchez. Birthdate: 20-NOV-86. Class: SO       
+- Student id: 6. Fullname: Michael Connoly. Birthdate: 04-DEC-86. Class: FR     
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> /*
+  2  Question 2:
+  3      Run script 7software in schemas des04
+  4      Using %ROWTYPE in a procedure, display all the consultants. Under each
+  5      consultant display all his/her skill (skill description) and the status of
+  6      the skill (certified or not)
+  7
+  8  */
+SQL> create or replace procedure l7q2 as
+  2      cursor con_cur is
+  3      select *
+  4      from consultant;
+  5      con_row con_cur%rowtype;
+  6
+  7      cursor skill_cur(p_c_id number) is
+  8      select c_id, cs.skill_id, certification, skill_description
+  9      from skill s, consultant_skill cs
+  10      where cs.skill_id = s.skill_id
+  11      and cs.c_id = p_c_id;
+  12      skill_row skill_cur%rowtype;
+  13  begin
+  14      open con_cur;
+  15      fetch con_cur into con_row;
+  16      while con_cur%found loop
+  17          dbms_output.put_line('---------------------------------------------------');
+  18          dbms_output.put_line('Consultant id ' || con_row.c_id || ' is ' || con_row.c_first || ' ' || con_row.c_last || '. Has the following skills: ');
+  19          open skill_cur(con_row.c_id);
+  20          fetch skill_cur into skill_row;
+  21          while skill_cur%found loop
+  22              dbms_output.put_line('- Skill id: ' || skill_row.skill_id || '. Description: ' || skill_row.skill_description || '. Certified: ' || skill_row.certification);
+  23              fetch skill_cur into skill_row;
+  24          end loop;
+  25          close skill_cur;
+  26      fetch con_cur into con_row;
+  27      end loop;
+  28      close con_cur;
+  29  end;
+  30  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec l7q2;
+
+---------------------------------------------------                             
+Consultant id 100 is Mark Myers. Has the following skills:                      
+- Skill id: 1. Description: VB .NET Programming. Certified: Y                   
+- Skill id: 3. Description: Java Programming. Certified: Y                      
+- Skill id: 4. Description: Project Management. Certified: Y                    
+- Skill id: 6. Description: Oracle Developer Programming. Certified: Y          
+---------------------------------------------------                             
+Consultant id 101 is Sheila Hernandez. Has the following skills:                
+- Skill id: 4. Description: Project Management. Certified: Y                    
+- Skill id: 5. Description: Web Application Programming. Certified: Y           
+---------------------------------------------------                             
+Consultant id 102 is Brian Zhang. Has the following skills:                     
+- Skill id: 7. Description: Oracle Database Administration. Certified: Y        
+---------------------------------------------------                             
+Consultant id 103 is Sarah Carlson. Has the following skills:                   
+- Skill id: 1. Description: VB .NET Programming. Certified: N                   
+- Skill id: 6. Description: Oracle Developer Programming. Certified: N          
+- Skill id: 8. Description: Windows NT/2000 Network Administration. Certified: N
+- Skill id: 9. Description: Windows XP Network Administration. Certified: N     
+---------------------------------------------------                             
+Consultant id 104 is Paul Courtlandt. Has the following skills:                 
+- Skill id: 8. Description: Windows NT/2000 Network Administration. Certified: N
+- Skill id: 9. Description: Windows XP Network Administration. Certified: Y     
+---------------------------------------------------                             
+Consultant id 105 is Janet Park. Has the following skills:                      
+- Skill id: 2. Description: COBOL Programming. Certified: N                     
+- Skill id: 3. Description: Java Programming. Certified: N                      
+- Skill id: 4. Description: Project Management. Certified: Y                    
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> /*
+  2  Question 3:
+  3      Run script 7clearwater in schemas des02
+  4      Using CURSOR FOR LOOP syntax 2 in a procedure to display all items
+  5      (item_id, item_desc, cat_id) under each item, display all the inventories
+  6      belong to it.
+  7  */
+SQL> create or replace procedure l7q3 as
+  2  begin
+  3      for i in (select item_id, item_desc, cat_id from item) loop
+  4          dbms_output.put_line('---------------------------------------------------');
+  5          dbms_output.put_line('Item id: ' || i.item_id || '. Item description: ' || i.item_desc || '. Category: ' || i.cat_id || '. Contains the following inventories: ');
+  6          for iv in (select * from inventory where i.item_id = item_id) loop
+  7              dbms_output.put_line('Inv id: ' || iv.inv_id || '. Color: ' || iv.color || '. Price: ' || iv.inv_price || '. Quantity: ' || iv.inv_qoh);
+  8          end loop;
+  9      end loop;
+  10  end;
+  11  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec l7q3;
+
+---------------------------------------------------                             
+Item id: 1. Item description: Men's Expedition Parka. Category: 3. Contains the 
+following inventories:                                                          
+Inv id: 23. Color: Spruce. Price: 184.27. Quantity: 114                         
+Inv id: 24. Color: Spruce. Price: 184.27. Quantity: 17                          
+Inv id: 25. Color: Spruce. Price: 193.49. Quantity: 0                           
+Inv id: 26. Color: Spruce. Price: 193.49. Quantity: 12                          
+---------------------------------------------------                             
+Item id: 2. Item description: 3-Season Tent. Category: 4. Contains the following
+inventories:                                                                    
+Inv id: 1. Color: Sky Blue. Price: 239.61. Quantity: 16                         
+Inv id: 2. Color: Light Grey. Price: 239.61. Quantity: 12                       
+---------------------------------------------------                             
+Item id: 3. Item description: Women's Hiking Shorts. Category: 1. Contains the  
+following inventories:                                                          
+Inv id: 3. Color: Khaki. Price: 27.6. Quantity: 150                             
+Inv id: 4. Color: Khaki. Price: 27.6. Quantity: 147                             
+Inv id: 5. Color: Khaki. Price: 27.6. Quantity: 0                               
+Inv id: 6. Color: Navy. Price: 27.6. Quantity: 139                              
+Inv id: 7. Color: Navy. Price: 27.6. Quantity: 137                              
+Inv id: 8. Color: Navy. Price: 27.6. Quantity: 115                              
+---------------------------------------------------                             
+Item id: 4. Item description: Women's Fleece Pullover. Category: 1. Contains the
+following inventories:                                                          
+Inv id: 9. Color: Eggplant. Price: 55.25. Quantity: 135                         
+Inv id: 10. Color: Eggplant. Price: 55.25. Quantity: 168                        
+Inv id: 11. Color: Eggplant. Price: 55.25. Quantity: 187                        
+Inv id: 12. Color: Royal. Price: 55.25. Quantity: 0                             
+Inv id: 13. Color: Royal. Price: 55.25. Quantity: 124                           
+Inv id: 14. Color: Royal. Price: 55.25. Quantity: 112                           
+---------------------------------------------------                             
+Item id: 5. Item description: Children's Beachcomber Sandals. Category: 2.      
+Contains the following inventories:                                             
+Inv id: 15. Color: Turquoise. Price: 14.74. Quantity: 121                       
+Inv id: 16. Color: Turquoise. Price: 14.74. Quantity: 111                       
+Inv id: 17. Color: Turquoise. Price: 14.74. Quantity: 113                       
+Inv id: 18. Color: Turquoise. Price: 14.74. Quantity: 121                       
+Inv id: 19. Color: Bright Pink. Price: 14.74. Quantity: 148                     
+Inv id: 20. Color: Bright Pink. Price: 14.74. Quantity: 137                     
+Inv id: 21. Color: Bright Pink. Price: 14.74. Quantity: 134                     
+Inv id: 22. Color: Bright Pink. Price: 14.74. Quantity: 123                     
+---------------------------------------------------                             
+Item id: 6. Item description: Boy's Surf Shorts. Category: 2. Contains the      
+following inventories:                                                          
+Inv id: 27. Color: Blue. Price: 14.7. Quantity: 50                              
+Inv id: 28. Color: Blue. Price: 14.7. Quantity: 100                             
+Inv id: 29. Color: Blue. Price: 14.7. Quantity: 100                             
+---------------------------------------------------                             
+Item id: 7. Item description: Girl's Soccer Tee. Category: 2. Contains the      
+following inventories:                                                          
+Inv id: 30. Color: White. Price: 18.42. Quantity: 100                           
+Inv id: 31. Color: White. Price: 18.42. Quantity: 100                           
+Inv id: 32. Color: White. Price: 18.42. Quantity: 100                           
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> /*
+  2  Question 4:
+  3      Modify question 3 to display beside the item description the value of the
+  4      item (value = inv_price * inv_qoh).
+  5
+  6  */
+SQL> create or replace procedure l7q4 as
+  2      v_value number;
+  3  begin
+  4      for i in (select item_id, item_desc, cat_id from item) loop
+  5          v_value := 0;
+  6          for v in (select inv_qoh, inv_price from inventory where item_id = i.item_id) loop
+  7              v_value := v_value + v.inv_qoh*v.inv_price;
+  8          end loop;
+  9          dbms_output.put_line('---------------------------------------------------');
+  10          dbms_output.put_line('Item id: ' || i.item_id || '. Item description: ' || i.item_desc || '. Category: ' || i.cat_id || '. Total value: ' || v_value);
+  11          for iv in (select * from inventory where item_id = i.item_id) loop
+  12              dbms_output.put_line('Inv id: ' || iv.inv_id || '. Color: ' || iv.color || '. Price: ' || iv.inv_price || '. Quantity: ' || iv.inv_qoh || '. Inv value = ' || iv.inv_qoh*iv.inv_price);
+  13          end loop;
+  14      end loop;
+  15  end;
+  16  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec l7q4;
+
+---------------------------------------------------                             
+Item id: 1. Item description: Men's Expedition Parka. Category: 3. Total value: 
+26461.25                                                                        
+Inv id: 23. Color: Spruce. Price: 184.27. Quantity: 114. Inv value = 21006.78   
+Inv id: 24. Color: Spruce. Price: 184.27. Quantity: 17. Inv value = 3132.59     
+Inv id: 25. Color: Spruce. Price: 193.49. Quantity: 0. Inv value = 0            
+Inv id: 26. Color: Spruce. Price: 193.49. Quantity: 12. Inv value = 2321.88     
+---------------------------------------------------                             
+Item id: 2. Item description: 3-Season Tent. Category: 4. Total value: 6709.08  
+Inv id: 1. Color: Sky Blue. Price: 239.61. Quantity: 16. Inv value = 3833.76    
+Inv id: 2. Color: Light Grey. Price: 239.61. Quantity: 12. Inv value = 2875.32  
+---------------------------------------------------                             
+Item id: 3. Item description: Women's Hiking Shorts. Category: 1. Total value:  
+18988.8                                                                         
+Inv id: 3. Color: Khaki. Price: 27.6. Quantity: 150. Inv value = 4140           
+Inv id: 4. Color: Khaki. Price: 27.6. Quantity: 147. Inv value = 4057.2         
+Inv id: 5. Color: Khaki. Price: 27.6. Quantity: 0. Inv value = 0                
+Inv id: 6. Color: Navy. Price: 27.6. Quantity: 139. Inv value = 3836.4          
+Inv id: 7. Color: Navy. Price: 27.6. Quantity: 137. Inv value = 3781.2          
+Inv id: 8. Color: Navy. Price: 27.6. Quantity: 115. Inv value = 3174            
+---------------------------------------------------                             
+Item id: 4. Item description: Women's Fleece Pullover. Category: 1. Total value:
+40111.5                                                                         
+Inv id: 9. Color: Eggplant. Price: 55.25. Quantity: 135. Inv value = 7458.75    
+Inv id: 10. Color: Eggplant. Price: 55.25. Quantity: 168. Inv value = 9282      
+Inv id: 11. Color: Eggplant. Price: 55.25. Quantity: 187. Inv value = 10331.75  
+Inv id: 12. Color: Royal. Price: 55.25. Quantity: 0. Inv value = 0              
+Inv id: 13. Color: Royal. Price: 55.25. Quantity: 124. Inv value = 6851         
+Inv id: 14. Color: Royal. Price: 55.25. Quantity: 112. Inv value = 6188         
+---------------------------------------------------                             
+Item id: 5. Item description: Children's Beachcomber Sandals. Category: 2. Total
+value: 14857.92                                                                 
+Inv id: 15. Color: Turquoise. Price: 14.74. Quantity: 121. Inv value = 1783.54  
+Inv id: 16. Color: Turquoise. Price: 14.74. Quantity: 111. Inv value = 1636.14  
+Inv id: 17. Color: Turquoise. Price: 14.74. Quantity: 113. Inv value = 1665.62  
+Inv id: 18. Color: Turquoise. Price: 14.74. Quantity: 121. Inv value = 1783.54  
+Inv id: 19. Color: Bright Pink. Price: 14.74. Quantity: 148. Inv value = 2181.52
+Inv id: 20. Color: Bright Pink. Price: 14.74. Quantity: 137. Inv value = 2019.38
+Inv id: 21. Color: Bright Pink. Price: 14.74. Quantity: 134. Inv value = 1975.16
+Inv id: 22. Color: Bright Pink. Price: 14.74. Quantity: 123. Inv value = 1813.02
+---------------------------------------------------                             
+Item id: 6. Item description: Boy's Surf Shorts. Category: 2. Total value: 3675 
+Inv id: 27. Color: Blue. Price: 14.7. Quantity: 50. Inv value = 735             
+Inv id: 28. Color: Blue. Price: 14.7. Quantity: 100. Inv value = 1470           
+Inv id: 29. Color: Blue. Price: 14.7. Quantity: 100. Inv value = 1470           
+---------------------------------------------------                             
+Item id: 7. Item description: Girl's Soccer Tee. Category: 2. Total value: 5526 
+Inv id: 30. Color: White. Price: 18.42. Quantity: 100. Inv value = 1842         
+Inv id: 31. Color: White. Price: 18.42. Quantity: 100. Inv value = 1842         
+Inv id: 32. Color: White. Price: 18.42. Quantity: 100. Inv value = 1842         
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> SPOOL off;
+

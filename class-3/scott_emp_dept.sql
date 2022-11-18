@@ -4,7 +4,7 @@ CREATE USER scott IDENTIFIED BY tiger;
 GRANT connect , resource , UNLIMITED TABLESPACE TO scott;
 
 -- connect scott/tiger;
-
+drop table emp;
 create table dept(
   deptno number(2,0),
   dname  varchar2(14),

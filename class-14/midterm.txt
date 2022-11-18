@@ -1,0 +1,603 @@
+SQL> SPOOL './midterm.txt';
+
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            02 November  Twenty Twenty-Two Wednesday 09:37:04 Pm
+
+SQL> CREATE OR REPLACE FUNCTION any_ruiz_f1 (p_date DATE)
+  2  RETURN NUMBER AS
+  3  BEGIN
+  4      RETURN FLOOR((sysdate - p_date) / 365);
+  5  END;
+  6  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> -- B 
+SQL> SELECT any_ruiz_f1('5 Jan 2017') as result from DUAL;
+
+    RESULT
+----------
+         5
+
+SQL> -- C 
+SQL> CREATE OR REPLACE FUNCTION any_ruiz_f2 (p1 NUMBER, p2 NUMBER)
+  2  RETURN NUMBER AS
+  3  BEGIN
+  4      RETURN p1 + p2;
+  5  END;
+  6  /
+
+FUNCTION created.
+
+Commit complete.
+
+SQL> -- D
+SQL> SELECT any_ruiz_f2(3,5) as result from DUAL;
+
+    RESULT
+----------
+         8
+
+SQL> CREATE OR REPLACE PROCEDURE any_p1 (P_EMPNO NUMBER, P_INCREASE NUMBER) AS
+  2      CURSOR EMP_CURR IS
+  3          SELECT empno, ename, sal, hiredate
+  4          FROM EMP
+  5          WHERE empno = p_empno
+  6          FOR UPDATE OF sal;
+  7      v_emp_row emp_curr%rowtype;
+  8      V_NEW_SAL EMP.SAL%TYPE;
+  9      v_yexp number;
+  10  BEGIN
+  11      OPEN EMP_CURR;
+  12      FETCH EMP_CURR INTO v_emp_row;
+  13      IF emp_curr%notfound THEN
+  14          DBMS_OUTPUT.PUT_LINE('Eemployee number: ' || p_empno || ' not found!');
+  15      else
+  16          v_yexp := any_ruiz_f1(v_emp_row.hiredate);
+  17          DBMS_OUTPUT.PUT_LINE('Employee number'|| p_empno || '. Name: ' ||
+  18              v_emp_row.ename || '. Salary: ' || v_emp_row.sal || '. Hire date: ' ||
+  19              v_emp_row.hiredate || '. Has ' || v_yexp || ' years of experience.');
+  20          if p_increase > 0 and p_increase <= 100 then
+  21              V_NEW_SAL := any_ruiz_f2(v_emp_row.sal, v_emp_row.sal*P_INCREASE/100);
+  22              UPDATE EMP
+  23              SET SAL = V_NEW_SAL
+  24              WHERE CURRENT OF emp_curr;
+  25              DBMS_OUTPUT.PUT_LINE('Employee number '|| p_empno || ', with ' ||
+  26              p_increase || '% increase in salary, will bring home $' ||
+  27              v_new_sal || ' instead of $' || v_emp_row.sal || '.');
+  28          else
+  29              DBMS_OUTPUT.PUT_LINE('Percentage increase is invalid');
+  30          end if;
+  31      end if;
+  32      CLOSE EMP_CURR;
+  33  commit;
+  34  END;
+  35  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> exec any_p1(7839, 20);
+
+Employee number7839. Name: KING. Salary: 5000. Hire date: 17-NOV-81. Has 40     
+years of experience.                                                            
+Employee number 7839, with 20% increase in salary, will bring home $6000 instead
+of $5000.                                                                       
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec any_p1(7369, 100);
+
+Employee number7369. Name: SMITH. Salary: 800. Hire date: 17-DEC-80. Has 41     
+years of experience.                                                            
+Employee number 7369, with 100% increase in salary, will bring home $1600       
+instead of $800.                                                                
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE any_p2 (P_INCR IN NUMBER) AS
+  2      CURSOR INCR_CUR IS
+  3          SELECT INV_ID, INV_PRICE,COLOR, INV_QOH
+  4          FROM INVENTORY;
+  5      V_INCR_ROW INCR_CUR%rowtype;
+  6
+  7      V_NEW_PRICE NUMBER;
+  8      V_VALUE NUMBER;
+  9      V_NEW_VALUE NUMBER;
+  10      v_case varchar(20);
+  11  BEGIN
+  12      OPEN INCR_CUR;
+  13      FETCH INCR_CUR INTO V_INCR_ROW;
+  14      WHILE INCR_CUR%FOUND LOOP
+  15          V_VALUE := V_INCR_ROW.INV_PRICE*V_INCR_ROW.INV_QOH;
+  16          V_NEW_PRICE := V_INCR_ROW.INV_PRICE*(1 + P_INCR/100);
+  17          V_NEW_VALUE := V_NEW_PRICE*V_INCR_ROW.INV_QOH;
+  18          IF P_INCR > 0 THEN
+  19              v_case := 'increase';
+  20          ELSE
+  21              v_case := 'decrease';
+  22          END IF;
+  23          DBMS_OUTPUT.PUT_LINE('For inv ID: ' || V_INCR_ROW.INV_ID || '. Price: ' || V_INCR_ROW.INV_PRICE ||
+  24          '. Color: ' || V_INCR_ROW.COLOR || '. QUANTITY ' || V_INCR_ROW.INV_QOH ||
+  25          '. Value ' || V_VALUE || '. For a ' || v_case || ' of ' || P_INCR ||
+  26          '%. New price is: ' || V_NEW_PRICE || '. New value: ' || V_NEW_VALUE);
+  27
+  28          DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------');
+  29          FETCH INCR_CUR INTO V_INCR_ROW;
+  30      END LOOP;
+  31      CLOSE INCR_CUR;
+  32  END;
+  33  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> exec any_p2(20);
+
+For inv ID: 1. Price: 249.59. Color: Sky Blue. QUANTITY 16. Value 3993.44. For a
+increase of 20%. New price is: 299.508. New value: 4792.128                     
+--------------------------------------------------------                        
+For inv ID: 2. Price: 249.59. Color: Light Grey. QUANTITY 12. Value 2995.08. For
+a increase of 20%. New price is: 299.508. New value: 3594.096                   
+--------------------------------------------------------                        
+For inv ID: 3. Price: 28.75. Color: Khaki. QUANTITY 150. Value 4312.5. For a    
+increase of 20%. New price is: 34.5. New value: 5175                            
+--------------------------------------------------------                        
+For inv ID: 4. Price: 28.75. Color: Khaki. QUANTITY 147. Value 4226.25. For a   
+increase of 20%. New price is: 34.5. New value: 5071.5                          
+--------------------------------------------------------                        
+For inv ID: 5. Price: 28.75. Color: Khaki. QUANTITY 0. Value 0. For a increase  
+of 20%. New price is: 34.5. New value: 0                                        
+--------------------------------------------------------                        
+For inv ID: 6. Price: 28.75. Color: Navy. QUANTITY 139. Value 3996.25. For a    
+increase of 20%. New price is: 34.5. New value: 4795.5                          
+--------------------------------------------------------                        
+For inv ID: 7. Price: 28.75. Color: Navy. QUANTITY 137. Value 3938.75. For a    
+increase of 20%. New price is: 34.5. New value: 4726.5                          
+--------------------------------------------------------                        
+For inv ID: 8. Price: 28.75. Color: Navy. QUANTITY 115. Value 3306.25. For a    
+increase of 20%. New price is: 34.5. New value: 3967.5                          
+--------------------------------------------------------                        
+For inv ID: 9. Price: 57.55. Color: Eggplant. QUANTITY 135. Value 7769.25. For a
+increase of 20%. New price is: 69.06. New value: 9323.1                         
+--------------------------------------------------------                        
+For inv ID: 10. Price: 57.55. Color: Eggplant. QUANTITY 168. Value 9668.4. For a
+increase of 20%. New price is: 69.06. New value: 11602.08                       
+--------------------------------------------------------                        
+For inv ID: 11. Price: 57.55. Color: Eggplant. QUANTITY 187. Value 10761.85. For
+a increase of 20%. New price is: 69.06. New value: 12914.22                     
+--------------------------------------------------------                        
+For inv ID: 12. Price: 57.55. Color: Royal. QUANTITY 0. Value 0. For a increase 
+of 20%. New price is: 69.06. New value: 0                                       
+--------------------------------------------------------                        
+For inv ID: 13. Price: 57.55. Color: Royal. QUANTITY 124. Value 7136.2. For a   
+increase of 20%. New price is: 69.06. New value: 8563.44                        
+--------------------------------------------------------                        
+For inv ID: 14. Price: 57.55. Color: Royal. QUANTITY 112. Value 6445.6. For a   
+increase of 20%. New price is: 69.06. New value: 7734.72                        
+--------------------------------------------------------                        
+For inv ID: 15. Price: 15.35. Color: Turquoise. QUANTITY 121. Value 1857.35. For
+a increase of 20%. New price is: 18.42. New value: 2228.82                      
+--------------------------------------------------------                        
+For inv ID: 16. Price: 15.35. Color: Turquoise. QUANTITY 111. Value 1703.85. For
+a increase of 20%. New price is: 18.42. New value: 2044.62                      
+--------------------------------------------------------                        
+For inv ID: 17. Price: 15.35. Color: Turquoise. QUANTITY 113. Value 1734.55. For
+a increase of 20%. New price is: 18.42. New value: 2081.46                      
+--------------------------------------------------------                        
+For inv ID: 18. Price: 15.35. Color: Turquoise. QUANTITY 121. Value 1857.35. For
+a increase of 20%. New price is: 18.42. New value: 2228.82                      
+--------------------------------------------------------                        
+For inv ID: 19. Price: 15.35. Color: Bright Pink. QUANTITY 148. Value 2271.8.   
+For a increase of 20%. New price is: 18.42. New value: 2726.16                  
+--------------------------------------------------------                        
+For inv ID: 20. Price: 15.35. Color: Bright Pink. QUANTITY 137. Value 2102.95.  
+For a increase of 20%. New price is: 18.42. New value: 2523.54                  
+--------------------------------------------------------                        
+For inv ID: 21. Price: 15.35. Color: Bright Pink. QUANTITY 134. Value 2056.9.   
+For a increase of 20%. New price is: 18.42. New value: 2468.28                  
+--------------------------------------------------------                        
+For inv ID: 22. Price: 15.35. Color: Bright Pink. QUANTITY 123. Value 1888.05.  
+For a increase of 20%. New price is: 18.42. New value: 2265.66                  
+--------------------------------------------------------                        
+For inv ID: 23. Price: 191.95. Color: Spruce. QUANTITY 114. Value 21882.3. For a
+increase of 20%. New price is: 230.34. New value: 26258.76                      
+--------------------------------------------------------                        
+For inv ID: 24. Price: 191.95. Color: Spruce. QUANTITY 17. Value 3263.15. For a 
+increase of 20%. New price is: 230.34. New value: 3915.78                       
+--------------------------------------------------------                        
+For inv ID: 25. Price: 201.55. Color: Spruce. QUANTITY 0. Value 0. For a        
+increase of 20%. New price is: 241.86. New value: 0                             
+--------------------------------------------------------                        
+For inv ID: 26. Price: 201.55. Color: Spruce. QUANTITY 12. Value 2418.6. For a  
+increase of 20%. New price is: 241.86. New value: 2902.32                       
+--------------------------------------------------------                        
+For inv ID: 27. Price: 15.31. Color: Blue. QUANTITY 50. Value 765.5. For a      
+increase of 20%. New price is: 18.372. New value: 918.6                         
+--------------------------------------------------------                        
+For inv ID: 28. Price: 15.31. Color: Blue. QUANTITY 100. Value 1531. For a      
+increase of 20%. New price is: 18.372. New value: 1837.2                        
+--------------------------------------------------------                        
+For inv ID: 29. Price: 15.31. Color: Blue. QUANTITY 100. Value 1531. For a      
+increase of 20%. New price is: 18.372. New value: 1837.2                        
+--------------------------------------------------------                        
+For inv ID: 30. Price: 19.19. Color: White. QUANTITY 100. Value 1919. For a     
+increase of 20%. New price is: 23.028. New value: 2302.8                        
+--------------------------------------------------------                        
+For inv ID: 31. Price: 19.19. Color: White. QUANTITY 100. Value 1919. For a     
+increase of 20%. New price is: 23.028. New value: 2302.8                        
+--------------------------------------------------------                        
+For inv ID: 32. Price: 19.19. Color: White. QUANTITY 100. Value 1919. For a     
+increase of 20%. New price is: 23.028. New value: 2302.8                        
+--------------------------------------------------------                        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec any_p2(-20);
+
+For inv ID: 1. Price: 249.59. Color: Sky Blue. QUANTITY 16. Value 3993.44. For a
+decrease of -20%. New price is: 199.672. New value: 3194.752                    
+--------------------------------------------------------                        
+For inv ID: 2. Price: 249.59. Color: Light Grey. QUANTITY 12. Value 2995.08. For
+a decrease of -20%. New price is: 199.672. New value: 2396.064                  
+--------------------------------------------------------                        
+For inv ID: 3. Price: 28.75. Color: Khaki. QUANTITY 150. Value 4312.5. For a    
+decrease of -20%. New price is: 23. New value: 3450                             
+--------------------------------------------------------                        
+For inv ID: 4. Price: 28.75. Color: Khaki. QUANTITY 147. Value 4226.25. For a   
+decrease of -20%. New price is: 23. New value: 3381                             
+--------------------------------------------------------                        
+For inv ID: 5. Price: 28.75. Color: Khaki. QUANTITY 0. Value 0. For a decrease  
+of -20%. New price is: 23. New value: 0                                         
+--------------------------------------------------------                        
+For inv ID: 6. Price: 28.75. Color: Navy. QUANTITY 139. Value 3996.25. For a    
+decrease of -20%. New price is: 23. New value: 3197                             
+--------------------------------------------------------                        
+For inv ID: 7. Price: 28.75. Color: Navy. QUANTITY 137. Value 3938.75. For a    
+decrease of -20%. New price is: 23. New value: 3151                             
+--------------------------------------------------------                        
+For inv ID: 8. Price: 28.75. Color: Navy. QUANTITY 115. Value 3306.25. For a    
+decrease of -20%. New price is: 23. New value: 2645                             
+--------------------------------------------------------                        
+For inv ID: 9. Price: 57.55. Color: Eggplant. QUANTITY 135. Value 7769.25. For a
+decrease of -20%. New price is: 46.04. New value: 6215.4                        
+--------------------------------------------------------                        
+For inv ID: 10. Price: 57.55. Color: Eggplant. QUANTITY 168. Value 9668.4. For a
+decrease of -20%. New price is: 46.04. New value: 7734.72                       
+--------------------------------------------------------                        
+For inv ID: 11. Price: 57.55. Color: Eggplant. QUANTITY 187. Value 10761.85. For
+a decrease of -20%. New price is: 46.04. New value: 8609.48                     
+--------------------------------------------------------                        
+For inv ID: 12. Price: 57.55. Color: Royal. QUANTITY 0. Value 0. For a decrease 
+of -20%. New price is: 46.04. New value: 0                                      
+--------------------------------------------------------                        
+For inv ID: 13. Price: 57.55. Color: Royal. QUANTITY 124. Value 7136.2. For a   
+decrease of -20%. New price is: 46.04. New value: 5708.96                       
+--------------------------------------------------------                        
+For inv ID: 14. Price: 57.55. Color: Royal. QUANTITY 112. Value 6445.6. For a   
+decrease of -20%. New price is: 46.04. New value: 5156.48                       
+--------------------------------------------------------                        
+For inv ID: 15. Price: 15.35. Color: Turquoise. QUANTITY 121. Value 1857.35. For
+a decrease of -20%. New price is: 12.28. New value: 1485.88                     
+--------------------------------------------------------                        
+For inv ID: 16. Price: 15.35. Color: Turquoise. QUANTITY 111. Value 1703.85. For
+a decrease of -20%. New price is: 12.28. New value: 1363.08                     
+--------------------------------------------------------                        
+For inv ID: 17. Price: 15.35. Color: Turquoise. QUANTITY 113. Value 1734.55. For
+a decrease of -20%. New price is: 12.28. New value: 1387.64                     
+--------------------------------------------------------                        
+For inv ID: 18. Price: 15.35. Color: Turquoise. QUANTITY 121. Value 1857.35. For
+a decrease of -20%. New price is: 12.28. New value: 1485.88                     
+--------------------------------------------------------                        
+For inv ID: 19. Price: 15.35. Color: Bright Pink. QUANTITY 148. Value 2271.8.   
+For a decrease of -20%. New price is: 12.28. New value: 1817.44                 
+--------------------------------------------------------                        
+For inv ID: 20. Price: 15.35. Color: Bright Pink. QUANTITY 137. Value 2102.95.  
+For a decrease of -20%. New price is: 12.28. New value: 1682.36                 
+--------------------------------------------------------                        
+For inv ID: 21. Price: 15.35. Color: Bright Pink. QUANTITY 134. Value 2056.9.   
+For a decrease of -20%. New price is: 12.28. New value: 1645.52                 
+--------------------------------------------------------                        
+For inv ID: 22. Price: 15.35. Color: Bright Pink. QUANTITY 123. Value 1888.05.  
+For a decrease of -20%. New price is: 12.28. New value: 1510.44                 
+--------------------------------------------------------                        
+For inv ID: 23. Price: 191.95. Color: Spruce. QUANTITY 114. Value 21882.3. For a
+decrease of -20%. New price is: 153.56. New value: 17505.84                     
+--------------------------------------------------------                        
+For inv ID: 24. Price: 191.95. Color: Spruce. QUANTITY 17. Value 3263.15. For a 
+decrease of -20%. New price is: 153.56. New value: 2610.52                      
+--------------------------------------------------------                        
+For inv ID: 25. Price: 201.55. Color: Spruce. QUANTITY 0. Value 0. For a        
+decrease of -20%. New price is: 161.24. New value: 0                            
+--------------------------------------------------------                        
+For inv ID: 26. Price: 201.55. Color: Spruce. QUANTITY 12. Value 2418.6. For a  
+decrease of -20%. New price is: 161.24. New value: 1934.88                      
+--------------------------------------------------------                        
+For inv ID: 27. Price: 15.31. Color: Blue. QUANTITY 50. Value 765.5. For a      
+decrease of -20%. New price is: 12.248. New value: 612.4                        
+--------------------------------------------------------                        
+For inv ID: 28. Price: 15.31. Color: Blue. QUANTITY 100. Value 1531. For a      
+decrease of -20%. New price is: 12.248. New value: 1224.8                       
+--------------------------------------------------------                        
+For inv ID: 29. Price: 15.31. Color: Blue. QUANTITY 100. Value 1531. For a      
+decrease of -20%. New price is: 12.248. New value: 1224.8                       
+--------------------------------------------------------                        
+For inv ID: 30. Price: 19.19. Color: White. QUANTITY 100. Value 1919. For a     
+decrease of -20%. New price is: 15.352. New value: 1535.2                       
+--------------------------------------------------------                        
+For inv ID: 31. Price: 19.19. Color: White. QUANTITY 100. Value 1919. For a     
+decrease of -20%. New price is: 15.352. New value: 1535.2                       
+--------------------------------------------------------                        
+For inv ID: 32. Price: 19.19. Color: White. QUANTITY 100. Value 1919. For a     
+decrease of -20%. New price is: 15.352. New value: 1535.2                       
+--------------------------------------------------------                        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PROCEDURE any_p3 (P_INCR IN NUMBER) AS
+  2      CURSOR INCR_CUR IS
+  3          SELECT INV_ID, INV_PRICE,COLOR, INV_QOH
+  4          FROM INVENTORY
+  5          FOR UPDATE OF INV_PRICE;
+  6      V_INCR_ROW INCR_CUR%rowtype;
+  7
+  8      V_NEW_PRICE NUMBER;
+  9      V_VALUE NUMBER;
+  10      V_NEW_VALUE NUMBER;
+  11      v_case varchar(20);
+  12  BEGIN
+  13      OPEN INCR_CUR;
+  14      FETCH INCR_CUR INTO V_INCR_ROW;
+  15      WHILE INCR_CUR%FOUND LOOP
+  16          V_VALUE := V_INCR_ROW.INV_PRICE*V_INCR_ROW.INV_QOH;
+  17          V_NEW_PRICE := V_INCR_ROW.INV_PRICE*(1 + P_INCR/100);
+  18          V_NEW_VALUE := V_NEW_PRICE*V_INCR_ROW.INV_QOH;
+  19          IF P_INCR > 0 THEN
+  20              v_case := 'increase';
+  21          ELSE
+  22              v_case := 'decrease';
+  23          END IF;
+  24          UPDATE INVENTORY
+  25          SET INV_PRICE = V_NEW_PRICE
+  26          WHERE CURRENT OF INCR_CUR;
+  27          DBMS_OUTPUT.PUT_LINE('For inv ID: ' || V_INCR_ROW.INV_ID || '. Price: ' || V_INCR_ROW.INV_PRICE ||
+  28          '. Color: ' || V_INCR_ROW.COLOR || '. QUANTITY ' || V_INCR_ROW.INV_QOH ||
+  29          '. Value ' || V_VALUE || '. For a ' || v_case || ' of ' || P_INCR ||
+  30          '%. New price is: ' || V_NEW_PRICE || '. New value: ' || V_NEW_VALUE);
+  31
+  32          DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------');
+  33          FETCH INCR_CUR INTO V_INCR_ROW;
+  34      END LOOP;
+  35      CLOSE INCR_CUR;
+  36  commit;
+  37  END;
+  38  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> exec any_p3(20);
+
+For inv ID: 1. Price: 249.59. Color: Sky Blue. QUANTITY 16. Value 3993.44. For a
+increase of 20%. New price is: 299.508. New value: 4792.128                     
+--------------------------------------------------------                        
+For inv ID: 2. Price: 249.59. Color: Light Grey. QUANTITY 12. Value 2995.08. For
+a increase of 20%. New price is: 299.508. New value: 3594.096                   
+--------------------------------------------------------                        
+For inv ID: 3. Price: 28.75. Color: Khaki. QUANTITY 150. Value 4312.5. For a    
+increase of 20%. New price is: 34.5. New value: 5175                            
+--------------------------------------------------------                        
+For inv ID: 4. Price: 28.75. Color: Khaki. QUANTITY 147. Value 4226.25. For a   
+increase of 20%. New price is: 34.5. New value: 5071.5                          
+--------------------------------------------------------                        
+For inv ID: 5. Price: 28.75. Color: Khaki. QUANTITY 0. Value 0. For a increase  
+of 20%. New price is: 34.5. New value: 0                                        
+--------------------------------------------------------                        
+For inv ID: 6. Price: 28.75. Color: Navy. QUANTITY 139. Value 3996.25. For a    
+increase of 20%. New price is: 34.5. New value: 4795.5                          
+--------------------------------------------------------                        
+For inv ID: 7. Price: 28.75. Color: Navy. QUANTITY 137. Value 3938.75. For a    
+increase of 20%. New price is: 34.5. New value: 4726.5                          
+--------------------------------------------------------                        
+For inv ID: 8. Price: 28.75. Color: Navy. QUANTITY 115. Value 3306.25. For a    
+increase of 20%. New price is: 34.5. New value: 3967.5                          
+--------------------------------------------------------                        
+For inv ID: 9. Price: 57.55. Color: Eggplant. QUANTITY 135. Value 7769.25. For a
+increase of 20%. New price is: 69.06. New value: 9323.1                         
+--------------------------------------------------------                        
+For inv ID: 10. Price: 57.55. Color: Eggplant. QUANTITY 168. Value 9668.4. For a
+increase of 20%. New price is: 69.06. New value: 11602.08                       
+--------------------------------------------------------                        
+For inv ID: 11. Price: 57.55. Color: Eggplant. QUANTITY 187. Value 10761.85. For
+a increase of 20%. New price is: 69.06. New value: 12914.22                     
+--------------------------------------------------------                        
+For inv ID: 12. Price: 57.55. Color: Royal. QUANTITY 0. Value 0. For a increase 
+of 20%. New price is: 69.06. New value: 0                                       
+--------------------------------------------------------                        
+For inv ID: 13. Price: 57.55. Color: Royal. QUANTITY 124. Value 7136.2. For a   
+increase of 20%. New price is: 69.06. New value: 8563.44                        
+--------------------------------------------------------                        
+For inv ID: 14. Price: 57.55. Color: Royal. QUANTITY 112. Value 6445.6. For a   
+increase of 20%. New price is: 69.06. New value: 7734.72                        
+--------------------------------------------------------                        
+For inv ID: 15. Price: 15.35. Color: Turquoise. QUANTITY 121. Value 1857.35. For
+a increase of 20%. New price is: 18.42. New value: 2228.82                      
+--------------------------------------------------------                        
+For inv ID: 16. Price: 15.35. Color: Turquoise. QUANTITY 111. Value 1703.85. For
+a increase of 20%. New price is: 18.42. New value: 2044.62                      
+--------------------------------------------------------                        
+For inv ID: 17. Price: 15.35. Color: Turquoise. QUANTITY 113. Value 1734.55. For
+a increase of 20%. New price is: 18.42. New value: 2081.46                      
+--------------------------------------------------------                        
+For inv ID: 18. Price: 15.35. Color: Turquoise. QUANTITY 121. Value 1857.35. For
+a increase of 20%. New price is: 18.42. New value: 2228.82                      
+--------------------------------------------------------                        
+For inv ID: 19. Price: 15.35. Color: Bright Pink. QUANTITY 148. Value 2271.8.   
+For a increase of 20%. New price is: 18.42. New value: 2726.16                  
+--------------------------------------------------------                        
+For inv ID: 20. Price: 15.35. Color: Bright Pink. QUANTITY 137. Value 2102.95.  
+For a increase of 20%. New price is: 18.42. New value: 2523.54                  
+--------------------------------------------------------                        
+For inv ID: 21. Price: 15.35. Color: Bright Pink. QUANTITY 134. Value 2056.9.   
+For a increase of 20%. New price is: 18.42. New value: 2468.28                  
+--------------------------------------------------------                        
+For inv ID: 22. Price: 15.35. Color: Bright Pink. QUANTITY 123. Value 1888.05.  
+For a increase of 20%. New price is: 18.42. New value: 2265.66                  
+--------------------------------------------------------                        
+For inv ID: 23. Price: 191.95. Color: Spruce. QUANTITY 114. Value 21882.3. For a
+increase of 20%. New price is: 230.34. New value: 26258.76                      
+--------------------------------------------------------                        
+For inv ID: 24. Price: 191.95. Color: Spruce. QUANTITY 17. Value 3263.15. For a 
+increase of 20%. New price is: 230.34. New value: 3915.78                       
+--------------------------------------------------------                        
+For inv ID: 25. Price: 201.55. Color: Spruce. QUANTITY 0. Value 0. For a        
+increase of 20%. New price is: 241.86. New value: 0                             
+--------------------------------------------------------                        
+For inv ID: 26. Price: 201.55. Color: Spruce. QUANTITY 12. Value 2418.6. For a  
+increase of 20%. New price is: 241.86. New value: 2902.32                       
+--------------------------------------------------------                        
+For inv ID: 27. Price: 15.31. Color: Blue. QUANTITY 50. Value 765.5. For a      
+increase of 20%. New price is: 18.372. New value: 918.6                         
+--------------------------------------------------------                        
+For inv ID: 28. Price: 15.31. Color: Blue. QUANTITY 100. Value 1531. For a      
+increase of 20%. New price is: 18.372. New value: 1837.2                        
+--------------------------------------------------------                        
+For inv ID: 29. Price: 15.31. Color: Blue. QUANTITY 100. Value 1531. For a      
+increase of 20%. New price is: 18.372. New value: 1837.2                        
+--------------------------------------------------------                        
+For inv ID: 30. Price: 19.19. Color: White. QUANTITY 100. Value 1919. For a     
+increase of 20%. New price is: 23.028. New value: 2302.8                        
+--------------------------------------------------------                        
+For inv ID: 31. Price: 19.19. Color: White. QUANTITY 100. Value 1919. For a     
+increase of 20%. New price is: 23.028. New value: 2302.8                        
+--------------------------------------------------------                        
+For inv ID: 32. Price: 19.19. Color: White. QUANTITY 100. Value 1919. For a     
+increase of 20%. New price is: 23.028. New value: 2302.8                        
+--------------------------------------------------------                        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec any_p3(-20);
+
+For inv ID: 1. Price: 299.51. Color: Sky Blue. QUANTITY 16. Value 4792.16. For a
+decrease of -20%. New price is: 239.608. New value: 3833.728                    
+--------------------------------------------------------                        
+For inv ID: 2. Price: 299.51. Color: Light Grey. QUANTITY 12. Value 3594.12. For
+a decrease of -20%. New price is: 239.608. New value: 2875.296                  
+--------------------------------------------------------                        
+For inv ID: 3. Price: 34.5. Color: Khaki. QUANTITY 150. Value 5175. For a       
+decrease of -20%. New price is: 27.6. New value: 4140                           
+--------------------------------------------------------                        
+For inv ID: 4. Price: 34.5. Color: Khaki. QUANTITY 147. Value 5071.5. For a     
+decrease of -20%. New price is: 27.6. New value: 4057.2                         
+--------------------------------------------------------                        
+For inv ID: 5. Price: 34.5. Color: Khaki. QUANTITY 0. Value 0. For a decrease of
+-20%. New price is: 27.6. New value: 0                                          
+--------------------------------------------------------                        
+For inv ID: 6. Price: 34.5. Color: Navy. QUANTITY 139. Value 4795.5. For a      
+decrease of -20%. New price is: 27.6. New value: 3836.4                         
+--------------------------------------------------------                        
+For inv ID: 7. Price: 34.5. Color: Navy. QUANTITY 137. Value 4726.5. For a      
+decrease of -20%. New price is: 27.6. New value: 3781.2                         
+--------------------------------------------------------                        
+For inv ID: 8. Price: 34.5. Color: Navy. QUANTITY 115. Value 3967.5. For a      
+decrease of -20%. New price is: 27.6. New value: 3174                           
+--------------------------------------------------------                        
+For inv ID: 9. Price: 69.06. Color: Eggplant. QUANTITY 135. Value 9323.1. For a 
+decrease of -20%. New price is: 55.248. New value: 7458.48                      
+--------------------------------------------------------                        
+For inv ID: 10. Price: 69.06. Color: Eggplant. QUANTITY 168. Value 11602.08. For
+a decrease of -20%. New price is: 55.248. New value: 9281.664                   
+--------------------------------------------------------                        
+For inv ID: 11. Price: 69.06. Color: Eggplant. QUANTITY 187. Value 12914.22. For
+a decrease of -20%. New price is: 55.248. New value: 10331.376                  
+--------------------------------------------------------                        
+For inv ID: 12. Price: 69.06. Color: Royal. QUANTITY 0. Value 0. For a decrease 
+of -20%. New price is: 55.248. New value: 0                                     
+--------------------------------------------------------                        
+For inv ID: 13. Price: 69.06. Color: Royal. QUANTITY 124. Value 8563.44. For a  
+decrease of -20%. New price is: 55.248. New value: 6850.752                     
+--------------------------------------------------------                        
+For inv ID: 14. Price: 69.06. Color: Royal. QUANTITY 112. Value 7734.72. For a  
+decrease of -20%. New price is: 55.248. New value: 6187.776                     
+--------------------------------------------------------                        
+For inv ID: 15. Price: 18.42. Color: Turquoise. QUANTITY 121. Value 2228.82. For
+a decrease of -20%. New price is: 14.736. New value: 1783.056                   
+--------------------------------------------------------                        
+For inv ID: 16. Price: 18.42. Color: Turquoise. QUANTITY 111. Value 2044.62. For
+a decrease of -20%. New price is: 14.736. New value: 1635.696                   
+--------------------------------------------------------                        
+For inv ID: 17. Price: 18.42. Color: Turquoise. QUANTITY 113. Value 2081.46. For
+a decrease of -20%. New price is: 14.736. New value: 1665.168                   
+--------------------------------------------------------                        
+For inv ID: 18. Price: 18.42. Color: Turquoise. QUANTITY 121. Value 2228.82. For
+a decrease of -20%. New price is: 14.736. New value: 1783.056                   
+--------------------------------------------------------                        
+For inv ID: 19. Price: 18.42. Color: Bright Pink. QUANTITY 148. Value 2726.16.  
+For a decrease of -20%. New price is: 14.736. New value: 2180.928               
+--------------------------------------------------------                        
+For inv ID: 20. Price: 18.42. Color: Bright Pink. QUANTITY 137. Value 2523.54.  
+For a decrease of -20%. New price is: 14.736. New value: 2018.832               
+--------------------------------------------------------                        
+For inv ID: 21. Price: 18.42. Color: Bright Pink. QUANTITY 134. Value 2468.28.  
+For a decrease of -20%. New price is: 14.736. New value: 1974.624               
+--------------------------------------------------------                        
+For inv ID: 22. Price: 18.42. Color: Bright Pink. QUANTITY 123. Value 2265.66.  
+For a decrease of -20%. New price is: 14.736. New value: 1812.528               
+--------------------------------------------------------                        
+For inv ID: 23. Price: 230.34. Color: Spruce. QUANTITY 114. Value 26258.76. For 
+a decrease of -20%. New price is: 184.272. New value: 21007.008                 
+--------------------------------------------------------                        
+For inv ID: 24. Price: 230.34. Color: Spruce. QUANTITY 17. Value 3915.78. For a 
+decrease of -20%. New price is: 184.272. New value: 3132.624                    
+--------------------------------------------------------                        
+For inv ID: 25. Price: 241.86. Color: Spruce. QUANTITY 0. Value 0. For a        
+decrease of -20%. New price is: 193.488. New value: 0                           
+--------------------------------------------------------                        
+For inv ID: 26. Price: 241.86. Color: Spruce. QUANTITY 12. Value 2902.32. For a 
+decrease of -20%. New price is: 193.488. New value: 2321.856                    
+--------------------------------------------------------                        
+For inv ID: 27. Price: 18.37. Color: Blue. QUANTITY 50. Value 918.5. For a      
+decrease of -20%. New price is: 14.696. New value: 734.8                        
+--------------------------------------------------------                        
+For inv ID: 28. Price: 18.37. Color: Blue. QUANTITY 100. Value 1837. For a      
+decrease of -20%. New price is: 14.696. New value: 1469.6                       
+--------------------------------------------------------                        
+For inv ID: 29. Price: 18.37. Color: Blue. QUANTITY 100. Value 1837. For a      
+decrease of -20%. New price is: 14.696. New value: 1469.6                       
+--------------------------------------------------------                        
+For inv ID: 30. Price: 23.03. Color: White. QUANTITY 100. Value 2303. For a     
+decrease of -20%. New price is: 18.424. New value: 1842.4                       
+--------------------------------------------------------                        
+For inv ID: 31. Price: 23.03. Color: White. QUANTITY 100. Value 2303. For a     
+decrease of -20%. New price is: 18.424. New value: 1842.4                       
+--------------------------------------------------------                        
+For inv ID: 32. Price: 23.03. Color: White. QUANTITY 100. Value 2303. For a     
+decrease of -20%. New price is: 18.424. New value: 1842.4                       
+--------------------------------------------------------                        
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> spool off;
+

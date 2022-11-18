@@ -6,17 +6,94 @@ FROM dual;
 CREATE OR REPLACE FUNCTION any_ruiz_f1 (p_date IN DATE)
 RETURN NUMBER AS
 	v_sysdate DATE;
-    v_age NUMBER;
 BEGIN
-    SELECT SYSDATE INTO v_sysdate FROM DUAL;
-    v_age := FLOOR((v_sysdate - p_date) / 365);
-    RETURN v_age;
+    v_sysdate := SYSDATE();
+    RETURN FLOOR((v_sysdate - p_date) / 365);
 END;
 /
--- B
-SELECT any_ruiz_f1(TO_DATE('5 Jan 2017')) as result from DUAL;
 
+-- B
+SELECT any_ruiz_f1('5 Jan 2017') as result from DUAL;
+select * from STUDENT;
+SELECT * from COURSE_SECTION;
+SELECT * from ENROLLMENT;
 -- C
+
+-- Create a procedure called your name p1 that accepts two numbers, and a character. The first number
+-- represent the s_id, the second number represent the c_sec_id, the third parameter represent the GRADE. The
+-- procedure must be able to:
+-- Validate the S_id (Display appropriate message to the client when the id does not exist) (5 marks)
+-- Validate the c_sec_id (Display appropriate message to the client when the id does not exist) (5 marks)
+-- Determine if the combination of s_id and c_sec id existed. (5 marks)
+-- Update the grade of the student. Use the function your _name f1 to calculate the AGE of the student,
+-- and display the student FULL name, his/her birthdate and age. (5 marks)
+
+create or replace procedure any_p1(p_sid number, p_csec_id number, p_grade char) AS
+    -- first step define cursor
+    cursor st_cur is
+        SELECT S_ID, S_FIRST, S_LAST, S_DOB
+        FROM STUDENT
+        WHERE S_ID = P_SID;
+    v_st_row st_cur%rowtype;
+
+    cursor csec_cur is
+        SELECT C_SEC_ID
+        FROM COURSE_SECTION
+        WHERE C_SEC_ID = P_CSEC_ID;
+    v_csec_row csec_cur%rowtype;
+
+    cursor enr_cur is
+        SELECT C_SEC_ID, S_ID, GRADE
+        FROM ENROLLMENT
+        WHERE C_SEC_ID = P_CSEC_ID AND S_ID = P_SID;
+    v_enr_row enr_cur%rowtype;
+begin
+    -- step 2: open cursors
+    open st_cur;
+    open csec_cur;
+    open enr_cur;
+
+    -- step 3 fetch
+
+    fetch st_cur into v_st_row;
+    fetch csec_cur into v_csec_row;
+    fetch enr_cur into v_enr_row;
+
+    if st_cur%notfound then
+        dbms_output.put_line('St id: ' || p_sid || ' not found!');
+    else 
+        if csec_cur%notfound then 
+            dbms_output.put_line('section id: ' || p_csec_id || ' not found!');
+        else
+            if enr_cur%notfound then
+                dbms_output.put_line('st id: ' || p_sid || ' not enrolled in course ' || p_csec_id);
+            else
+                if v_enr_row.grade = p_grade then
+                    dbms_output.put_line('St id: ' || p_sid || ' found!, no update needed');
+                else 
+                    update enrollment set grade = p_grade;
+                    dbms_output.put_line('St id: ' || p_sid || ' found and updated!');
+                    dbms_output.put_line('St id: ' || p_sid || '. Full name: ' || 
+                        v_st_row.s_first || ' ' || v_st_row.s_last || '. Birthdate: ' ||
+                        v_st_row.s_dob || '. Age: ' || any_ruiz_f1(v_st_row.s_dob) || ' years old.'
+                    );
+                end if;
+            end if;
+        end if;
+    end if;
+end;
+/ 
+
+-- S_ID DOES NOT EXIST
+EXEC any_p1(7, 1, 'A')
+-- C_SEC_ID DOES NOT EXIST
+EXEC any_p1(6, 14, 'A')
+-- Combinaton DOES NOT EXIST
+EXEC any_p1(1, 13, 'A')
+-- Combination exists and grade is updated
+EXEC any_p1(2, 1, 'B')
+-- Combination exists and grade is not updated
+EXEC any_p1(1, 1, 'A')
 
 CREATE OR REPLACE PROCEDURE any_ruiz_p1(P_SID NUMBER, P_CSEC_ID NUMBER, P_GRADE CHAR) AS
     V_SID STUDENT.S_ID%TYPE;
@@ -112,6 +189,7 @@ CREATE OR REPLACE PROCEDURE any_ruiz_p2 AS
     V_ROOM LOCATION.ROOM%TYPE;
 
 BEGIN
+-- step 3 open cursor 
     OPEN fac_cur;
         
     FETCH fac_cur INTO V_FID, V_FLNAME, V_FFNAME, V_FRANK;
@@ -133,4 +211,26 @@ END;
 /
 EXEC any_ruiz_p2
 
+-- We need to display all the students and their age. Using function of question 1, create a procedure to display all students
+-- s_id, s_last, s_first, s_dob, s_age
+select * from student
+
+create or replace procedure all_st as
+    cursor st_cur is
+        select s_id, s_last, s_first, s_dob
+        from student;
+    v_st_row st_cur%rowtype;
+begin
+    open st_cur;
+    fetch st_cur into v_st_row;
+    while st_cur%found loop
+        dbms_output.put_line('st id: '|| v_st_row.s_id || 
+        '. Full name: ' || v_st_row.s_first || ' ' || v_st_row.s_last || 
+        '. Birthdate: ' || v_st_row.s_dob || '. Age: ' || any_ruiz_f1(v_st_row.s_dob) || ' years old.');
+        fetch st_cur into v_st_row;
+    end loop;
+end;
+/
+
+exec all_st
 SPOOL OFF;
