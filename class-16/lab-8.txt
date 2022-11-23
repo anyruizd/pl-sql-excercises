@@ -1,0 +1,296 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            23 November  Twenty Twenty-Two Wednesday 02:09:33 Am
+
+SQL> /*
+  2  Question 1: (use script 7clearwater) des02
+  3  Modify the package order_package (Example of lecture on PACKAGE) by adding
+  4  function, procedure to verify the quantity on hand before insert a row in
+  5  table order_line and to update also the quantity on hand of table inventory.
+  6
+  7  Modify the package order_package (Example of lecture on PACKAGE) by adding
+  8  function, procedure to verify the quantity on hand before insert a row in
+  9  table order_line and to update also the quantity on hand of table inventory.
+  10
+  11  Test your package with different cases.
+  12  */
+SQL> CREATE OR REPLACE PACKAGE order_package IS
+  2      global_inv_id NUMBER(6);
+  3      global_quantity NUMBER(6);
+  4      PROCEDURE create_new_order(current_c_id NUMBER,
+  5              current_meth_pmt VARCHAR2,
+  6              current_os_id NUMBER);
+  7      PROCEDURE update_inventory(current_o_id NUMBER);
+  8      PROCEDURE create_new_order_line(current_o_id NUMBER, quantity NUMBER);
+  9  END;
+  10  /
+
+PACKAGE created.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PACKAGE BODY order_package IS
+  2
+  3      PROCEDURE create_new_order(current_c_id NUMBER, current_meth_pmt VARCHAR2, current_os_id NUMBER) AS
+  4              current_o_id NUMBER;
+  5          BEGIN
+  6              SELECT order_sequence.NEXTVAL
+  7              INTO   current_o_id
+  8              FROM   dual;
+  9              INSERT INTO orders
+  10              VALUES(current_o_id, sysdate, current_meth_pmt,
+  11                      current_c_id, current_os_id);
+  12              update_inventory(current_o_id);
+  13              COMMIT;
+  14      END create_new_order;
+  15
+  16      PROCEDURE create_new_order_line(current_o_id NUMBER, quantity NUMBER) AS
+  17              BEGIN
+  18                 INSERT INTO order_line
+  19                 VALUES(current_o_id, global_inv_id,quantity);
+  20                 COMMIT;
+  21              DBMS_OUTPUT.PUT_LINE('Order line number ' || current_o_id || ' created for inventory id ' || global_inv_id);
+  22      END create_new_order_line;
+  23
+  24      PROCEDURE update_inventory(current_o_id NUMBER) AS
+  25              current_inv_qoh NUMBER(6);
+  26              BEGIN
+  27                  SELECT inv_qoh
+  28                  INTO   current_inv_qoh
+  29                  FROM   inventory
+  30                  WHERE  inv_id = global_inv_id;
+  31                  IF current_inv_qoh > global_quantity THEN
+  32                      create_new_order_line(current_o_id, global_quantity);
+  33                      UPDATE inventory
+  34                      SET    inv_qoh = current_inv_qoh - global_quantity
+  35                      WHERE  inv_id = global_inv_id;
+  36                      COMMIT;
+  37                      DBMS_OUTPUT.PUT_LINE('Inventory id: ' || global_inv_id || ' was updated!');
+  38                  ELSIF current_inv_qoh = global_quantity THEN
+  39                      create_new_order_line(current_o_id, global_quantity);
+  40                      UPDATE inventory
+  41                      SET    inv_qoh = 0
+  42                      WHERE  inv_id = global_inv_id;
+  43                      DBMS_OUTPUT.PUT_LINE('Inventory id: ' || global_inv_id || ' was updated!');
+  44                      COMMIT;
+  45                  ELSIF current_inv_qoh < global_quantity THEN
+  46                      create_new_order_line(current_o_id, current_inv_qoh);
+  47                      UPDATE inventory
+  48                      SET    inv_qoh = 0
+  49                      WHERE  inv_id = global_inv_id;
+  50                      COMMIT;
+  51                      DBMS_OUTPUT.PUT_LINE('The amount you ordered is not fully available. We will have ' || (global_quantity - current_inv_qoh) ||'soon.');
+  52                      DBMS_OUTPUT.PUT_LINE('Inventory id: ' || global_inv_id || ' was updated!');
+  53                  ELSIF current_inv_qoh = 0 THEN
+  54                      DBMS_OUTPUT.PUT_LINE('The quantity ' || global_quantity ||' you ordered is not available. We will have it soon.');
+  55                  END IF;
+  56
+  57      END update_inventory;
+  58  END;
+  59  /
+
+PACKAGE BODY created.
+
+Commit complete.
+
+SQL> BEGIN
+  2    order_package.global_inv_id := 32;
+  3    order_package.global_quantity := 10;
+  4  END;
+  5  /
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC order_package.create_new_order(4,'FAVOR',6);
+
+Order line number 94 created for inventory id 32                                
+The amount you ordered is not fully available. We will have 10soon.             
+Inventory id: 32 was updated!                                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> BEGIN
+  2    order_package.global_inv_id := 21;
+  3    order_package.global_quantity := 2;
+  4  END;
+  5  /
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC order_package.create_new_order(3,'Cash',1);
+
+Order line number 95 created for inventory id 21                                
+Inventory id: 21 was updated!                                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> /*
+  2
+  3  Question 2: (use script 7software)
+  4  Create a package with a procedure that accepts the consultant id, skill id, and a
+  5  letter to insert a new row into table consultant_skill.
+  6
+  7  After the record is inserted, display the consultant last and first name,
+  8  skill description and the status of the certification as CERTIFIED or Not Yet Certified.
+  9
+  10
+  11  Do not forget to handle the errors such as: Consultant, skill does not exist and
+  12  the certification is different than 'Y' or 'N'.
+  13
+  14
+  15  Test your package at least 2 times!
+  16
+  17  */
+SQL> CREATE OR REPLACE PACKAGE c_sk_package IS
+  2      PROCEDURE create_new_consultant_skill(P_CID NUMBER, P_SKID NUMBER, P_CERTST CHAR);
+  3      PROCEDURE DISPLAY_DATA(P_CID NUMBER, P_SKID NUMBER, P_CERTST CHAR);
+  4  END;
+
+PACKAGE created.
+
+Commit complete.
+
+SQL> CREATE OR REPLACE PACKAGE BODY c_sk_package IS
+  2      PROCEDURE DISPLAY_DATA(P_CID NUMBER, P_SKID NUMBER, P_CERTST CHAR) AS
+  3          V_LNAME CONSULTANT.C_LAST%TYPE;
+  4          V_FNAME CONSULTANT.C_FIRST%TYPE;
+  5          V_SKDESC SKILL.SKILL_DESCRIPTION%TYPE;
+  6          V_CERT VARCHAR(20);
+  7      BEGIN
+  8          SELECT C_FIRST, C_LAST, SKILL_DESCRIPTION
+  9          INTO V_FNAME, V_LNAME, V_SKDESC
+  10          FROM CONSULTANT C
+  11          JOIN CONSULTANT_SKILL C_SK ON C.C_ID = C_SK.C_ID
+  12          JOIN SKILL SK ON SK.SKILL_ID = C_SK.SKILL_ID
+  13          WHERE C.C_ID = P_CID
+  14          AND C_SK.SKILL_ID = P_SKID;
+  15
+  16          IF P_CERTST = 'Y' THEN
+  17              V_CERT := 'CERTIFIED';
+  18          ELSE
+  19              V_CERT := 'Not Yet Certified';
+  20          END IF;
+  21
+  22          DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID
+  23              || ' is ' || V_FNAME || ' ' || V_LNAME
+  24              || '. They work in ' || V_SKDESC || '. Certification status is: ' || V_CERT || '!');
+  25      END DISPLAY_DATA;
+  26      PROCEDURE create_new_consultant_skill(P_CID NUMBER, P_SKID NUMBER, P_CERTST CHAR) AS
+  27          V_EXC NUMBER;
+  28          V_SKID NUMBER;
+  29          V_CID NUMBER;
+  30          V_CERTST CHAR;
+  31          BEGIN
+  32              -- VERIFY C_ID EXISTS IN CONSULTANT
+  33              V_EXC := 1;
+  34              SELECT C_ID
+  35              INTO V_CID
+  36              FROM CONSULTANT
+  37              WHERE C_ID = P_CID;
+  38
+  39              -- VERIFY SK_ID EXISTS IN SKILL
+  40              V_EXC := 2;
+  41              SELECT SKILL_ID
+  42              INTO V_SKID
+  43              FROM SKILL
+  44              WHERE SKILL_ID = P_SKID;
+  45
+  46              -- VERIFY COMBINATION EXISTS IN CONSULTANT_SKILL
+  47              V_EXC := 3;
+  48              SELECT C_ID, SKILL_ID, CERTIFICATION
+  49              INTO V_CID, V_SKID, V_CERTST
+  50              FROM CONSULTANT_SKILL
+  51              WHERE SKILL_ID = P_SKID AND C_ID = P_CID;
+  52
+  53              -- IF COMBINATION EXISTS, CHECK IF IT'S NECESSARY TO UPDATE  CERTIFICATION
+  54              IF V_CERTST = P_CERTST THEN
+  55                  DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' found, no update needed!');
+  56                  DISPLAY_DATA(P_CID, P_SKID, P_CERTST);
+  57              ELSE
+  58                  DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' found, update needed!');
+  59                  IF P_CERTST <> 'Y' AND P_CERTST <> 'N' THEN
+  60                      DBMS_OUTPUT.PUT_LINE('Certification code ' || P_CERTST || ' is invalid!');
+  61                  ELSE
+  62                      UPDATE CONSULTANT_SKILL SET CERTIFICATION = P_CERTST WHERE C_ID = P_CID;
+  63                      DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' updated!');
+  64                      DISPLAY_DATA(P_CID, P_SKID, P_CERTST);
+  65                      COMMIT;
+  66                  END IF;
+  67              END IF;
+  68
+  69          EXCEPTION
+  70          WHEN NO_DATA_FOUND THEN
+  71              IF V_EXC = 1 THEN -- C_ID DOES NOT EXIST
+  72                  DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' does not exist, please add it first!');
+  73              ELSIF V_EXC = 2 THEN -- SKILL_ID DOES NOT EXIST
+  74                  DBMS_OUTPUT.PUT_LINE('Skill number ' || P_SKID || ' does not exist, please add it first!');
+  75              ELSIF V_EXC = 3 THEN -- COMBINATION DOES NOT EXIST: INSERT IT
+  76                  DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' and skill number ' || P_SKID || ' need to be added!');
+  77                  INSERT INTO CONSULTANT_SKILL(C_ID, SKILL_ID, CERTIFICATION)
+  78                  VALUES(P_CID, P_SKID, P_CERTST);
+  79                  DBMS_OUTPUT.PUT_LINE('Consultant number ' || P_CID || ' and skill number ' || P_SKID || ' inserted!');
+  80                  DISPLAY_DATA(P_CID, P_SKID, P_CERTST);
+  81                  COMMIT;
+  82              END IF;
+  83      END create_new_consultant_skill;
+  84  END;
+  85  /
+
+PACKAGE BODY created.
+
+Commit complete.
+
+SQL> EXEC c_sk_package.create_new_consultant_skill(100, 4, 'Y');
+
+Consultant number 100 found, no update needed!                                  
+Consultant number 100 is Mark Myers. They work in Project Management.           
+Certification status is: CERTIFIED!                                             
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC c_sk_package.create_new_consultant_skill(102, 7, 'S');
+
+Consultant number 102 found, update needed!                                     
+Certification code S is invalid!                                                
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC c_sk_package.create_new_consultant_skill(103, 9, 'Y');
+
+Consultant number 103 found, update needed!                                     
+Consultant number 103 updated!                                                  
+Consultant number 103 is Sarah Carlson. They work in Windows XP Network         
+Administration. Certification status is: CERTIFIED!                             
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC c_sk_package.create_new_consultant_skill(100, 7, 'Y');
+
+Consultant number 100 and skill number 7 need to be added!                      
+Consultant number 100 and skill number 7 inserted!                              
+Consultant number 100 is Mark Myers. They work in Oracle Database               
+Administration. Certification status is: CERTIFIED!                             
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> SPOOL OFF;
+

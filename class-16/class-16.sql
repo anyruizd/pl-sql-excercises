@@ -307,23 +307,23 @@ exec ex1;
 
 Add procedure to the package
 
-  CREATE OR REPLACE PACKAGE order_package IS
-      global_inv_id NUMBER(6);
-      global_quantity NUMBER(6);
-      PROCEDURE create_new_order(current_c_id NUMBER, 
-              current_meth_pmt VARCHAR2, 
-              current_os_id NUMBER);
-      PROCEDURE create_new_order_line(current_o_id NUMBER);
-    END;
-    /
+CREATE OR REPLACE PACKAGE order_package IS
+    global_inv_id NUMBER(6);
+    global_quantity NUMBER(6);
+    PROCEDURE create_new_order(current_c_id NUMBER, 
+            current_meth_pmt VARCHAR2, 
+            current_os_id NUMBER);
+    PROCEDURE create_new_order_line(current_o_id NUMBER);
+  END;
+  /
 
 --------------- Package BODY  -----------
-   Syntax:
-        CREATE OR REPLACE PACKAGE BODY name_of_package IS
-              private variable declaration
-              UNIT PROGRAM CODE (body of procedure/function)
-        END;
-        /
+  --  Syntax:
+  --       CREATE OR REPLACE PACKAGE BODY name_of_package IS
+  --             private variable declaration
+  --             UNIT PROGRAM CODE (body of procedure/function)
+  --       END;
+  --       /
 
 CREATE SEQUENCE order_sequence START WITH 7;
 
