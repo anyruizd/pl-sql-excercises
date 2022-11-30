@@ -15,7 +15,7 @@ DROP USER any1 CASCADE;
 CREATE USER any1 IDENTIFIED BY 123;
     -- to provide needed privileges to a user do:
     -- Syntax:  GRANT connect, resource TO name_of_user;
-GRANT connect, resource TO any1;
+GRANT connect, resource, UNLIMITED TABLESPACE TO any1;
     -- to connect a normal user to the database do:
     -- Syntax:  connect name_of_user/password
 connect any1/123

@@ -1,0 +1,28 @@
+-- DROP USER any1 CASCADE;
+-- CREATE USER any1 IDENTIFIED BY any1;
+-- GRANT connect, resource, UNLIMITED TABLESPACE TO any1;
+-- connect any1/any1;
+
+-- DROP USER thiago CASCADE;
+-- CREATE USER thiago IDENTIFIED BY thiago;
+-- GRANT connect, resource, UNLIMITED TABLESPACE TO thiago;
+-- connect thiago/thiago;
+
+-- DROP USER alex CASCADE;
+-- CREATE USER alex IDENTIFIED BY alex;
+-- GRANT connect, resource, UNLIMITED TABLESPACE TO alex;
+-- connect alex/alex;
+
+create sequence enrl_audit_seq;
+create table enrl_audit(enrl_audit_id number, date_updated date, updating_user varchar(20));
+
+create or replace trigger enrl_audit_trigger
+after insert or update or delete on ENROLLMENT
+BEGIN
+    insert into enrl_audit
+    values(enrl_audit_seq.NEXTVAL, sysdate, user);
+END;
+/
+
+grant select, insert, update, delete on enrollment to alex;
+grant select, insert, update, delete on enrollment to thiago;

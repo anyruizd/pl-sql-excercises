@@ -1,0 +1,376 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            27 November  Twenty Twenty-Two Sunday    12:24:41 Am
+
+SQL> /*
+  2
+  3  Question 1: des02, script 7clearwater
+  4      Create a package with OVERLOADING procedure used to insert a new customer. The user has
+  5      the choice of providing either
+  6      a/ Last Name, address
+  7      b/ Last Name, birthdate
+  8      c/ Last Name, First Name, birthdate
+  9      d/ Customer id, last name, birthdate
+  10      In case no customer id is provided, please use a number from a sequence called customer_sequence.
+  11
+  12  */
+
+SQL> create sequence customer_sequence start with 13 increment by 1 nocache;
+
+Sequence created.
+
+SQL> create or replace package customer_pkg is
+  2      procedure cus_insert(p_lname VARCHAR2, p_address VARCHAR2);
+  3      procedure cus_insert(p_lname VARCHAR2, p_birthdate DATE);
+  4      procedure cus_insert(p_lname VARCHAR2, p_fname VARCHAR2, p_birthdate DATE);
+  5      procedure cus_insert(p_c_id NUMBER, p_lname VARCHAR2, p_birthdate DATE);
+  6  end;
+  7  /
+
+Package created.
+
+Commit complete.
+
+SQL> create or replace package body customer_pkg is
+  2      procedure cus_insert(p_lname VARCHAR2, p_address VARCHAR2) as
+  3      begin
+  4          insert into CUSTOMER(c_id, c_last, c_address)
+  5          values(customer_sequence.nextval, p_lname, p_address);
+  6          commit;
+  7          dbms_output.put_line('Customer inserted successfully');
+  8      end cus_insert;
+  9      procedure cus_insert(p_lname VARCHAR2, p_birthdate DATE) as
+  10      begin
+  11          insert into CUSTOMER(c_id, c_last, c_birthdate)
+  12          values(customer_sequence.nextval, p_lname, p_birthdate);
+  13          commit;
+  14          dbms_output.put_line('Customer inserted successfully');
+  15      end cus_insert;
+  16      procedure cus_insert(p_lname VARCHAR2, p_fname VARCHAR2, p_birthdate DATE) as
+  17      begin
+  18          insert into CUSTOMER(c_id, c_last, c_first, c_birthdate)
+  19          values(customer_sequence.nextval, p_lname, p_fname, p_birthdate);
+  20          commit;
+  21          dbms_output.put_line('Customer inserted successfully');
+  22      end cus_insert;
+  23      procedure cus_insert(p_c_id NUMBER, p_lname VARCHAR2, p_birthdate DATE) as
+  24      begin
+  25          insert into CUSTOMER(c_id, c_last, c_birthdate)
+  26          values(p_c_id, p_lname, p_birthdate);
+  27          commit;
+  28          dbms_output.put_line('Customer inserted successfully');
+  29      end cus_insert;
+  30  end;
+  31  /
+
+Package Body created.
+
+Commit complete.
+
+SQL> exec customer_pkg.cus_insert('Ruiz', '1975 Maisonneuve Boulevard Ou');
+
+Customer inserted successfully                                                  
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec customer_pkg.cus_insert('Ruiz', TO_DATE('1991-02-14', 'YYYY-MM-DD'));
+
+Customer inserted successfully                                                  
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec customer_pkg.cus_insert('Ruiz', 'Any', TO_DATE('1991-02-14', 'YYYY-MM-DD'));
+
+Customer inserted successfully                                                  
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec customer_pkg.cus_insert(16,'Ruiz', TO_DATE('1991-02-14', 'YYYY-MM-DD'));
+
+Customer inserted successfully                                                  
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> SELECT * FROM CUSTOMER order by c_id;
+
+      C_ID C_LAST                         C_FIRST                        C_MI  
+---------- ------------------------------ ------------------------------ ------
+    C_BIRTHDATE C_ADDRESS                      C_CITY                        
+--------------- ------------------------------ ------------------------------
+C_STATE C_ZIP      C_DPHONE   C_EPHONE  
+------- ---------- ---------- ----------
+C_USERID                                           C_PASSWORD     
+-------------------------------------------------- ---------------
+         1 Harris                         Paula                          E     
+      09-APR-53 1156 Water Street, Apt. #3     Osseo                         
+WI      54705      7155558943 7155559035
+harrispe                                           asdfjk         
+         2 Garcia                         Maria                          H     
+      14-JUL-58 2211 Pine Drive                Radisson                      
+WI      54867      7155558332 7155558332
+garciamm                                           12345          
+         3 Miller                         Lee                                  
+      05-JAN-36 699 Pluto St. NW               Silver Lake                   
+WI      53821      7155554978 7155559002
+millerl                                            zxcvb          
+         4 Chang                          Alissa                         R     
+      01-OCT-76 987 Durham Rd.                 Apple Valley                  
+MN      55712      7155557651 7155550087
+changar                                            qwerui         
+         5 Edwards                        Mitch                          M     
+      20-NOV-86 4204 Garner Street             Washburn                      
+WI      54891      7155558243 7155556975
+edwardsmm                                          qwerty         
+         6 Nelson                         Kyle                           E     
+      04-DEC-84 232 Echo Rd.                   Minnetonka                    
+MN      55438      7151113333 7155552222
+nelsonke                                           clever         
+         7 Ruiz                                                                
+                1975 Maisonneuve Boulevard Ou                                
+                                        
+                                                                  
+         8 Ruiz                                                                
+                1975 Maisonneuve Boulevard Ou                                
+                                        
+                                                                  
+         9 Ruiz                                                                
+                14-FEB-91                                                    
+                                        
+                                                                  
+        10 Ruiz                           Any                                  
+      14-FEB-91                                                              
+                                        
+                                                                  
+        11 Ruiz                           Any                                  
+      14-FEB-91                                                              
+                                        
+                                                                  
+        12 Ruiz                                                                
+      14-FEB-91                                                              
+                                        
+                                                                  
+        13 Ruiz                                                                
+                1975 Maisonneuve Boulevard Ou                                
+                                        
+                                                                  
+        14 Ruiz                                                                
+      14-FEB-91                                                              
+                                        
+                                                                  
+        15 Ruiz                           Any                                  
+      14-FEB-91                                                              
+                                        
+                                                                  
+        16 Ruiz                                                                
+      14-FEB-91                                                              
+                                        
+                                                                  
+
+SQL> /*
+  2
+  3  Question 2: des03, script 7northwoods
+  4      Create a package with OVERLOADING procedure used to insert a new student. The user has the
+  5      choice of providing either
+  6      a/ Student id, last name, birthdate
+  7      b/ Last Name, birthdate
+  8      c/ Last Name, address
+  9      d/ Last Name, First Name, birthdate, faculty id
+  10      In case no student id is provided, please use a number from a sequence called student_sequence.
+  11      Make sure that the package with the overloading procedure is user friendly enough to handle error such as:
+  12      - Faculty id does not exist
+  13      - Student id provided already existed
+  14      - Birthdate is in the future
+  15      Please test for all cases and hand in spool file.
+  16
+  17  */
+SQL> create sequence student_sequence start with 9 increment by 1 nocache;
+
+Sequence created.
+
+SQL> create or replace package student_pkg is
+  2      procedure student_insert(p_s_id NUMBER, p_s_last VARCHAR2, p_birthdate DATE);
+  3      procedure student_insert(p_s_last VARCHAR2, p_birthdate DATE);
+  4      procedure student_insert(p_s_last VARCHAR2, p_address VARCHAR2);
+  5      procedure student_insert(p_s_last VARCHAR2, p_s_first VARCHAR2, p_birthdate DATE, p_f_id NUMBER);
+  6      procedure check_birthdate(p_birthdate DATE, is_valid OUT BOOLEAN);
+  7      procedure check_student_id(p_s_id NUMBER, s_id_exists OUT BOOLEAN);
+  8      procedure check_faculty_id(p_f_id NUMBER, f_id_exists OUT BOOLEAN );
+  9  end;
+  10  /
+
+Package created.
+
+Commit complete.
+
+SQL> create or replace package body student_pkg is
+  2      procedure check_birthdate(p_birthdate DATE, is_valid OUT BOOLEAN) AS
+  3      begin
+  4          if p_birthdate > sysdate then
+  5              is_valid := FALSE;
+  6          else
+  7              is_valid := TRUE;
+  8          end if;
+  9      end check_birthdate;
+  10      procedure check_faculty_id(p_f_id NUMBER, f_id_exists OUT BOOLEAN ) AS
+  11          v_f_id NUMBER;
+  12      begin
+  13          select f_id into v_f_id from FACULTY where f_id = p_f_id;
+  14          f_id_exists := TRUE;
+  15          EXCEPTION WHEN NO_DATA_FOUND THEN
+  16              f_id_exists := FALSE;
+  17      end check_faculty_id;
+  18      procedure check_student_id(p_s_id NUMBER, s_id_exists OUT BOOLEAN) AS
+  19          v_s_id NUMBER;
+  20      begin
+  21          select s_id into v_s_id from STUDENT where s_id = p_s_id;
+  22          s_id_exists := TRUE;
+  23          EXCEPTION WHEN NO_DATA_FOUND THEN
+  24              s_id_exists := FALSE;
+  25      end check_student_id;
+  26
+  27      procedure student_insert(p_s_id NUMBER, p_s_last VARCHAR2, p_birthdate DATE) as
+  28          birthdate_valid BOOLEAN;
+  29          s_id_exists BOOLEAN;
+  30      begin
+  31          check_student_id(p_s_id, s_id_exists);
+  32          if s_id_exists = TRUE then
+  33              dbms_output.put_line('Error! Student id provided already existed');
+  34          else
+  35              check_birthdate(p_birthdate, birthdate_valid);
+  36              if birthdate_valid = TRUE then
+  37                  insert into STUDENT(s_id, s_last, s_dob)
+  38                  values(p_s_id, p_s_last, p_birthdate);
+  39                  commit;
+  40                  dbms_output.put_line('Student inserted successfully');
+  41              else
+  42                  dbms_output.put_line('Error! Birthdate is in the future');
+  43              end if;
+  44          end if;
+  45      end student_insert;
+  46      procedure student_insert(p_s_last VARCHAR2, p_birthdate DATE) as
+  47          birthdate_valid BOOLEAN;
+  48      begin
+  49          check_birthdate(p_birthdate, birthdate_valid);
+  50          if birthdate_valid = TRUE then
+  51          insert into STUDENT(s_id, s_last, s_dob)
+  52          values(student_sequence.nextval, p_s_last, p_birthdate);
+  53          commit;
+  54          dbms_output.put_line('Student inserted successfully');
+  55          else
+  56              dbms_output.put_line('Error!  Birthdate is in the future');
+  57          end if;
+  58      end student_insert;
+  59      procedure student_insert(p_s_last VARCHAR2, p_address VARCHAR2) as
+  60      begin
+  61          insert into STUDENT(s_id, s_last, s_address)
+  62          values(student_sequence.nextval, p_s_last, p_address);
+  63          commit;
+  64          dbms_output.put_line('Student inserted successfully');
+  65      end student_insert;
+  66      procedure student_insert(p_s_last VARCHAR2, p_s_first VARCHAR2, p_birthdate DATE, p_f_id NUMBER) as
+  67          birthdate_valid BOOLEAN;
+  68          f_id_exists BOOLEAN;
+  69      begin
+  70          check_faculty_id(p_f_id, f_id_exists);
+  71          if f_id_exists = FALSE then
+  72              dbms_output.put_line('Error! Faculty id does not exist');
+  73          else
+  74              check_birthdate(p_birthdate, birthdate_valid);
+  75              if birthdate_valid = TRUE then
+  76                  insert into STUDENT(s_id, s_last, s_first, s_dob, f_id)
+  77                  values(student_sequence.nextval, p_s_last, p_s_first, p_birthdate, p_f_id);
+  78                  commit;
+  79                  dbms_output.put_line('Student inserted successfully');
+  80              else
+  81                  dbms_output.put_line('Error! Birthdate is in the future');
+  82              end if;
+  83          end if;
+  84      end student_insert;
+  85  end;
+  86  /
+
+Package Body created.
+
+Commit complete.
+
+SQL> exec student_pkg.student_insert('Ruiz', TO_DATE('1991-02-14', 'YYYY-MM-DD'));
+
+Student inserted successfully                                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec student_pkg.student_insert(10, 'Ruiz', TO_DATE('1991-02-14', 'YYYY-MM-DD'));
+
+Student inserted successfully                                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> select student_sequence.nextval from dual;
+
+   NEXTVAL
+----------
+        11
+
+SQL> exec student_pkg.student_insert('Ruiz', 'Any');
+
+Student inserted successfully                                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec student_pkg.student_insert('Ruiz', 'Any', TO_DATE('1991-02-14', 'YYYY-MM-DD'), 1);
+
+Student inserted successfully                                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- check with invalid birthdate
+
+SQL> exec student_pkg.student_insert('Ruiz', TO_DATE('2023-02-14', 'YYYY-MM-DD'));
+
+Error!  Birthdate is in the future                                              
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- check with invalid student id
+
+SQL> exec student_pkg.student_insert(2, 'Ruiz', TO_DATE('1991-02-14', 'YYYY-MM-DD'));
+
+Error! Student id provided already existed                                      
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- check with invalid faculty id
+
+SQL> exec student_pkg.student_insert('Ruiz', 'Any', TO_DATE('1991-02-14', 'YYYY-MM-DD'), 6);
+
+Error! Faculty id does not exist                                                
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> SPOOL off;
+
