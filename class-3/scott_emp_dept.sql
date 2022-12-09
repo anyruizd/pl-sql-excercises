@@ -1,9 +1,9 @@
--- connect sys/sys as sysdba;
+-- connect sys/MyPassword123#@localhost:1521/XE as sysdba;
 DROP USER scott CASCADE;
 CREATE USER scott IDENTIFIED BY tiger;
 GRANT connect , resource , UNLIMITED TABLESPACE TO scott;
 
--- connect scott/tiger;
+-- connect scott/tiger@localhost:1521/XE;
 drop table emp;
 create table dept(
   deptno number(2,0),

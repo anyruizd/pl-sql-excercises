@@ -1,10 +1,10 @@
 -- script to create NORTHWOODS database
 -- revised 09/01/2022 Huu Con Nguyen
-connect sys/sys as sysdba;
+connect sys/MyPassword123#@localhost:1521/XE as sysdba;
 DROP USER des03 CASCADE;
 CREATE USER des03 IDENTIFIED BY des03;
 GRANT connect , resource, create view, UNLIMITED TABLESPACE TO des03;
-connect des03/des03;
+connect des03/des03@localhost:1521/XE;
 
 DROP TABLE enrollment CASCADE CONSTRAINTS;
 DROP TABLE course_section CASCADE CONSTRAINTS;

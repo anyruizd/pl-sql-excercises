@@ -1,0 +1,362 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            09 December  Twenty Twenty-Two Friday    03:43:04 Pm
+
+SQL> connect scott/tiger@localhost:1521/XE
+
+Connected.
+
+SQL> create or replace package final_q1 is
+  2      function calc_area(n1 number) return number;
+  3      function calc_area(n1 number, n2 number) return number;
+  4  end;
+  5  /
+
+Package created.
+
+Commit complete.
+
+SQL> create or replace package body final_q1 is
+  2      function calc_area(n1 number) return number is
+  3      begin
+  4          return n1*n1;
+  5      end calc_area;
+  6      function calc_area(n1 number, n2 number) return number is
+  7      begin
+  8          return n1*n2;
+  9      end calc_area;
+  10  end;
+  11  /
+
+Package Body created.
+
+Commit complete.
+
+SQL> create or replace procedure final_q1_p1(n1 number, n2 number) as
+  2      v_area number;
+  3      v_perimeter number;
+  4      v_shape varchar2(10);
+  5      e_negative exception;
+  6  begin
+  7      if n1 < 0 or n2 < 0 then
+  8          raise e_negative;
+  9      end if;
+  10
+  11      if n1 = n2 then
+  12          v_area := final_q1.calc_area(n1);
+  13          v_shape := 'square';
+  14      else
+  15          v_area := final_q1.calc_area(n1, n2);
+  16          v_shape := 'rectangle';
+  17      end if;
+  18      v_perimeter := 2*(n1 + n2);
+  19      dbms_output.put_line('For the ' || v_shape || ' of side ' || n1 || ' by ' || n2 || ', The area is ' ||
+  20          v_area || ', and ' || v_perimeter || ' is the perimeter.');
+  21
+  22      exception
+  23      when e_negative then
+  24          dbms_output.put_line('Error, sides cannot be negative!');
+  25  end;
+  26  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec final_q1_p1(2, 2);
+
+For the square of side 2 by 2, The area is 4, and 8 is the perimeter.           
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec final_q1_p1(2, -2);
+
+Error, sides cannot be negative!                                                
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec final_q1_p1(2, 4);
+
+For the rectangle of side 2 by 4, The area is 8, and 12 is the perimeter.       
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> /*
+  2      Question 3
+  3   */
+SQL> connect des04/des04@localhost:1521/XE
+
+Connected.
+
+SQL> create or replace procedure final_q2 as
+  2  begin
+  3      for p in (select project_name, c_last, p_id from project, consultant where mgr_id = c_id) loop
+  4          dbms_output.put_line('---------------------------------------');
+  5          dbms_output.put_line(p.project_name || ' - ' || p.c_last);
+  6          dbms_output.put_line('---------------------------------------');
+  7          for c in (select c_last, c_first, roll_on_date, roll_off_date, p_id, cons.c_id
+  8                   from consultant cons, project_consultant pc
+  9                   where pc.c_id = cons.c_id and pc.p_id = p.p_id) loop
+  10              dbms_output.put_line('Consultant: ' || c.c_first || ' ' || c.c_last || '. Start date: ' || c.roll_on_date || '. End date: ' || c.roll_off_date);
+  11          end loop;
+  12      end loop;
+  13  end;
+  14  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec final_q2;
+
+---------------------------------------                                         
+Hardware Support Intranet - Park                                                
+---------------------------------------                                         
+Consultant: Sheila Hernandez. Start date: 15-JUN-06. End date: 15-DEC-06        
+Consultant: Sarah Carlson. Start date: 05-JAN-06. End date: 05-JUN-06           
+Consultant: Paul Courtlandt. Start date: 05-JAN-06. End date: 15-DEC-06         
+Consultant: Janet Park. Start date: 05-JAN-06. End date: 01-JAN-18              
+---------------------------------------                                         
+Hardware Support Interface - Carlson                                            
+---------------------------------------                                         
+Consultant: Mark Myers. Start date: 17-JUL-06. End date: 17-SEP-06              
+Consultant: Janet Park. Start date: 17-JUL-06. End date: 01-JAN-18              
+---------------------------------------                                         
+Hardware Support Database - Zhang                                               
+---------------------------------------                                         
+Consultant: Sarah Carlson. Start date: 15-SEP-06. End date: 15-MAR-07           
+Consultant: Paul Courtlandt. Start date: 15-OCT-06. End date: 15-DEC-06         
+---------------------------------------                                         
+Teller Support System - Park                                                    
+---------------------------------------                                         
+Consultant: Brian Zhang. Start date: 15-JUL-06. End date: 15-DEC-06             
+Consultant: Paul Courtlandt. Start date: 15-JUN-06. End date: 15-DEC-06         
+Consultant: Janet Park. Start date: 05-JUN-06. End date: 01-JAN-18              
+---------------------------------------                                         
+Internet Advertising - Park                                                     
+---------------------------------------                                         
+Consultant: Sarah Carlson. Start date: 19-SEP-06. End date: 19-MAR-07           
+Consultant: Janet Park. Start date: 19-SEP-06. End date: 01-JAN-18              
+---------------------------------------                                         
+Network Design - Courtlandt                                                     
+---------------------------------------                                         
+Consultant: Sarah Carlson. Start date: 19-SEP-06. End date: 19-MAR-07           
+Consultant: Paul Courtlandt. Start date: 19-SEP-06. End date: 01-JAN-18         
+---------------------------------------                                         
+Exploration Database - Zhang                                                    
+---------------------------------------                                         
+Consultant: Mark Myers. Start date: 25-MAY-06. End date: 20-DEC-06              
+Consultant: Brian Zhang. Start date: 20-MAY-06. End date: 20-DEC-06             
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> /*
+  2      Question 4:
+  3  */SQL> create sequence project_consultant_audit_seq;
+
+Sequence created.
+
+SQL> create table audit_project_consultant (
+  2      audit_id number,
+  3      project_id number,
+  4      consultant_id number,
+  5      roll_on_date date,
+  6      roll_off_date date,
+  7      date_updated date,
+  8      updating_user varchar2(30)
+  9  );
+
+Table created.
+
+SQL> create or replace trigger audit_project_consultant_trigger
+  2      after update on project_consultant
+  3      for each row
+  4      WHEN (old.roll_on_date IS NOT NULL)
+  5  begin
+  6      insert into audit_project_consultant values (
+  7          project_consultant_audit_seq.nextval,
+  8          :old.p_id,
+  9          :old.c_id,
+  10          :old.roll_on_date,
+  11          :old.roll_off_date,
+  12          sysdate,
+  13          user
+  14      );
+  15  end;
+  16  /
+
+Trigger created.
+
+Commit complete.
+
+SQL> grant select, insert, update, delete on project_consultant to vampirito;
+
+Grant succeeded.
+
+SQL> connect vampirito/vampirito@localhost:1521/XE
+
+Connected.
+
+SQL> UPDATE des04.project_consultant SET ROLL_OFF_DATE = TO_DATE('2022-01-01', 'YYYY-MM-DD')
+  2  WHERE p_id = 6 and c_id = 104;
+
+1 row updated.
+
+Commit complete.
+
+SQL> commit;
+
+Commit complete.
+
+SQL> connect des04/des04@localhost:1521/XE;
+
+Connected.
+
+SQL> SELECT * from audit_project_consultant;
+
+  AUDIT_ID PROJECT_ID CONSULTANT_ID    ROLL_ON_DATE   ROLL_OFF_DATE
+---------- ---------- ------------- --------------- ---------------
+   DATE_UPDATED UPDATING_USER                 
+--------------- ------------------------------
+         1          6           104       19-SEP-06       01-JAN-18
+      09-DEC-22 VAMPIRITO                     
+
+SQL> /*
+  2      Question 5:
+  3
+  4  */
+SQL> connect des03/des03@localhost:1521/XE
+
+Connected.
+
+SQL> CREATE OR REPLACE PROCEDURE final_q5(P_SID NUMBER, P_CSEC_ID NUMBER, P_GRADE CHAR) AS
+  2      V_SID STUDENT.S_ID%TYPE;
+  3      V_CSEC_ID COURSE_SECTION.C_SEC_ID%TYPE;
+  4      V_COURSE_ID COURSE.COURSE_ID%TYPE;
+  5      V_GRADE ENROLLMENT.GRADE%TYPE;
+  6      V_SFNAME STUDENT.S_FIRST%TYPE;
+  7      V_SLNAME STUDENT.S_LAST%TYPE;
+  8      V_COURSE_NAME COURSE.COURSE_NAME%TYPE;
+  9      V_EXC NUMBER;
+  10  BEGIN
+  11      -- VERIFY S_ID EXISTS IN STUDENT
+  12      V_EXC := 1;
+  13      SELECT S_ID, S_FIRST, S_LAST
+  14      INTO V_SID, V_SFNAME, V_SLNAME
+  15      FROM STUDENT
+  16      WHERE S_ID = P_SID;
+  17
+  18      -- VERIFY C_SEC_ID EXISTS IN COURSE_SECTION
+  19      V_EXC := 2;
+  20      SELECT C_SEC_ID, COURSE_ID
+  21      INTO V_CSEC_ID, V_COURSE_ID
+  22      FROM COURSE_SECTION
+  23      WHERE C_SEC_ID = P_CSEC_ID;
+  24
+  25      -- VERIFY COMBINATION EXISTS IN ENROLLMENT
+  26      V_EXC := 3;
+  27      SELECT C_SEC_ID, S_ID, GRADE
+  28      INTO V_CSEC_ID, V_SID, V_GRADE
+  29      FROM ENROLLMENT
+  30      WHERE C_SEC_ID = P_CSEC_ID AND S_ID = P_SID;
+  31
+  32      -- IF COMBINATION EXISTS, CHECK IF IT'S NECESSARY TO UPDATE  GRADE
+  33      IF V_GRADE = P_GRADE THEN
+  34          DBMS_OUTPUT.PUT_LINE('Student ID ' || P_SID || ' found, no update needed!');
+  35      ELSE
+  36          DBMS_OUTPUT.PUT_LINE('Student ID ' || P_SID || ' found, update needed!');
+  37          UPDATE ENROLLMENT SET GRADE = P_GRADE WHERE S_ID = P_SID;
+  38          DBMS_OUTPUT.PUT_LINE('Student ID ' || P_SID || ' grade was updated!');
+  39          COMMIT;
+  40      END IF;
+  41
+  42      SELECT COURSE_NAME into V_COURSE_NAME FROM COURSE where COURSE_ID = V_COURSE_ID;
+  43
+  44      DBMS_OUTPUT.PUT_LINE('Student id ' || P_SID || '. First name: ' || V_SFNAME || '. Last name: ' || V_SLNAME ||
+  45      '. Enrolled in course  ' || V_COURSE_NAME);
+  46
+  47      EXCEPTION
+  48      WHEN NO_DATA_FOUND THEN
+  49          IF V_EXC = 1 THEN -- S_ID DOES NOT EXIST
+  50              DBMS_OUTPUT.PUT_LINE('Student ID ' || P_SID || ' does not exist, please add it first!');
+  51          ELSIF V_EXC = 2 THEN -- SKILL_ID DOES NOT EXIST
+  52              DBMS_OUTPUT.PUT_LINE('Course section ' || P_CSEC_ID || ' does not exist, please add it first!');
+  53          ELSIF V_EXC = 3 THEN -- COMBINATION DOES NOT EXIST -> INSERT IT
+  54              DBMS_OUTPUT.PUT_LINE('Student number ' || P_SID || ' and course section ' || P_CSEC_ID || ' need to be inserted!');
+  55              INSERT INTO ENROLLMENT(S_ID, C_SEC_ID, GRADE)
+  56              VALUES(P_SID, P_CSEC_ID, P_GRADE);
+  57              DBMS_OUTPUT.PUT_LINE('Student number ' || P_SID || ' and course section ' || P_CSEC_ID || ' inserted!');
+  58              COMMIT;
+  59              SELECT COURSE_NAME into V_COURSE_NAME FROM COURSE where COURSE_ID = V_COURSE_ID;
+  60
+  61              DBMS_OUTPUT.PUT_LINE('Student id ' || P_SID || '. First name: ' || V_SFNAME || '. Last name: ' || V_SLNAME ||
+  62              '. Enrolled in course  ' || V_COURSE_NAME);
+  63          END IF;
+  64  END;
+  65  /
+
+PROCEDURE created.
+
+Commit complete.
+
+SQL> EXEC final_q5(7, 1, 'A')
+
+Student ID 7 does not exist, please add it first!                               
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC final_q5(6, 14, 'A')
+
+Course section 14 does not exist, please add it first!                          
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC final_q5(1, 13, 'A')
+
+Student number 1 and course section 13 need to be inserted!                     
+Student number 1 and course section 13 inserted!                                
+Student id 1. First name: Sarah. Last name: Miller. Enrolled in course  Database
+Management                                                                      
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC final_q5(2, 1, 'A')
+
+Student ID 2 found, update needed!                                              
+Student ID 2 grade was updated!                                                 
+Student id 2. First name: Brian. Last name: Umato. Enrolled in course  Intro. to
+Info. Systems                                                                   
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> EXEC final_q5(1, 1, 'A')
+
+Student ID 1 found, no update needed!                                           
+Student id 1. First name: Sarah. Last name: Miller. Enrolled in course  Intro.  
+to Info. Systems                                                                
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> spool off
+

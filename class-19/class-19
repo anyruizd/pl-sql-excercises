@@ -26,3 +26,231 @@ END;
 
 grant select, insert, update, delete on enrollment to alex;
 grant select, insert, update, delete on enrollment to thiago;
+
+
+--------------------------- from teacher
+-- Dec 25 Lecture Database Trigger + Project Part 10
+
+-- Dec 30  Lecture  Instead of Trigger / EXCEPTION  +  Project  BONUS 
+
+-- Dec 2  SIMULATION FINAL  
+
+-- Dec 6  Correction SIMULATION + last minutes questions
+
+-- Dec 9  FINAL EXAM room  3318 time  9:00
+
+
+connect sys/sys as sysdba;
+DROP USER any1 CASCADE;
+CREATE USER any1 IDENTIFIED BY any1;
+GRANT connect , resource, create view TO any1;
+CREATE USER thiago IDENTIFIED BY thiago;
+GRANT connect , resource, create view TO thiago;
+CREATE USER alexandre IDENTIFIED BY alexandre;
+GRANT connect , resource, create view TO alexandre;
+connect any1/any1;
+
+DATABASE TRIGGERs 
+
+Syntax:  CREATE OR REPLACE TRIGGER name_of_trigger
+            [BEFORE | AFTER]  [INSERT | UPDATE | DELETE] ON name_of_table
+            [ FOR EACH ROW ]
+            [WHEN condition] ;
+
+   BEFORE  TABLE LEVEL TRIGGER 
+   BEFORE  ROW LEVEL TRIGGER
+       ACTION
+   AFTER   ROW LEVEL TRIGGER
+   AFTER   TABLE LEVEL TRIGGER
+
+-- Example 1: Any need to monitor her table enrollment, create sequence, table to audit the
+-- table enrollment by saving, when, who modify the table enrollment.
+
+
+  CREATE SEQUENCE enrl_audit_seq;
+  CREATE TABLE enrl_audit(enrl_audit_id NUMBER, date_updated DATE, 
+  updating_user VARCHAR2(20));
+
+
+
+-- any
+CREATE OR REPLACE TRIGGER enrl_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON enrollment
+BEGIN
+  INSERT INTO enrl_audit 
+  VALUES(enrl_audit_seq.NEXTVAL, sysdate, user);
+END;
+/
+
+
+
+
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON enrollment TO Alexandre;
+GRANT SELECT, INSERT, UPDATE, DELETE ON enrollment TO Thiago;
+
+
+
+
+-- Thiago
+  SELECT * FROM Any1.student;
+  SELECT * FROM Any1.enrollment;
+  UPDATE Any1.enrollment SET grade = 'Y' 
+  WHERE s_id = 6 AND c_sec_id = 12;
+
+
+
+
+-- Any
+  SELECT enrl_audit_id, TO_CHAR(date_updated, 'DD MM YYYY Year Day HH:MI:SS Am'), 
+   updating_user FROM  enrl_audit;
+
+
+-- Ex:  Modify the table enrl_audit by adding a column named ACTION_PERFORMED to record whether
+-- INSERT, UPDATE, or DELETE has been performed by other user to the table enrollment.
+-- Modify the trigger enrl_audit_trigger accordingly.
+
+
+
+
+
+sol:
+  ALTER TABLE enrl_audit
+  ADD (action_performed VARCHAR2(30));
+
+
+
+
+
+CREATE OR REPLACE TRIGGER enrl_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON enrollment
+BEGIN
+  IF INSERTING THEN
+    INSERT INTO enrl_audit 
+    VALUES(enrl_audit_seq.NEXTVAL, sysdate, user,'INSERT');
+  ELSIF UPDATING THEN 
+    INSERT INTO enrl_audit 
+    VALUES(enrl_audit_seq.NEXTVAL, sysdate, user,'UPDATE');
+  ELSIF DELETING THEN 
+    INSERT INTO enrl_audit 
+    VALUES(enrl_audit_seq.NEXTVAL, sysdate, user,'Borrar');
+  END IF; 
+END;
+/
+
+
+
+
+
+
+-- Thiago
+  SELECT * FROM Any1.enrollment;
+  UPDATE Any1.enrollment SET grade = 'A' 
+  WHERE s_id = 6 AND c_sec_id = 12;
+
+
+   INSERT INTO Any1.enrollment
+   VALUES(6,10,'B');
+
+
+   DELETE FROM Any1.enrollment
+   WHERE s_id = 5 AND c_sec_id = 13;
+
+  -- alexandre
+DELETE FROM Any1.enrollment
+   WHERE s_id = 6 AND c_sec_id = 10;
+
+
+
+
+-- Any
+  SELECT enrl_audit_id, TO_CHAR(date_updated, 'DD MM YYYY Year Day HH:MI:SS Am'), 
+   updating_user, action_performed FROM  enrl_audit;
+
+
+
+
+
+
+-- Ex5: Create sequence, trigger to audit the table enrollment when it is UPDATED, 
+-- save the old data in a table
+-- called enrl_row_audit using the design below:
+
+
+  -- ENRL_ROW_AUDIT (row_number, date_updated, updating_user, 
+  --                old_s_id, old_c_sec_id, old_grade);
+
+
+
+
+
+
+
+
+-- sol: 
+CREATE sequence enrl_row_audit_seq ;
+
+
+CREATE TABLE enrl_row_audit(row_number NUMBER, date_updated DATE, updating_user VARCHAR2(30),
+              old_s_id NUMBER, old_c_sec_id NUMBER, old_grade CHAR(1));
+
+CREATE OR REPLACE TRIGGER enrl_row_audit_trigger
+AFTER UPDATE ON enrollment
+FOR EACH ROW
+  BEGIN
+    INSERT INTO enrl_row_audit
+    VALUES(enrl_row_audit_seq.NEXTVAL, sysdate, user, :OLD.s_id, :OLD.c_sec_id , :OLD.grade);
+  END;
+/
+
+
+
+
+testing
+  UPDATE Any1.enrollment SET grade = 'X' 
+  WHERE s_id = 6;
+
+
+Any
+  SELECT row_number, TO_CHAR(date_updated, 'DD MM YYYY Year Day HH:MI:SS Am'), 
+   updating_user, old_s_id , old_c_sec_id , old_grade 
+  FROM enrl_row_audit;
+
+
+
+
+Ex6:  Modify the trigger of example number 5 to let it fired ONLY 
+if the old grade IS NOT NULL
+
+
+
+
+     CREATE OR REPLACE TRIGGER enrl_row_audit_trigger
+     AFTER UPDATE ON enrollment
+     FOR EACH ROW
+     WHEN (old.grade IS NOT NULL)
+       BEGIN
+         INSERT INTO enrl_row_audit
+         VALUES(enrl_row_audit_seq.NEXTVAL, sysdate, user, :OLD.s_id, :OLD.c_sec_id , :OLD.grade);
+       END;
+     /
+
+
+testing
+SELECT * FROM any1.enrollment;
+UPDATE Any1.enrollment SET grade = 'Z' 
+  WHERE s_id = 3;
+
+
+UPDATE Any1.enrollment SET grade = 'v' 
+  WHERE s_id = 3;
+
+
+BONUS
+Create sequence, trigger to audit the table consultant_skill when it is UPDATED, 
+save the old data in a table
+called c_skill_row_audit using the design below:
+
+
+  C_SKILL_ROW_AUDIT (row_number, date_updated, updating_user, 
+                 old_c_id, old_skill_id, old_certification);

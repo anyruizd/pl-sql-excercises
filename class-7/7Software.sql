@@ -1,6 +1,6 @@
 --script to create Software Experts database
 -- revised 09/01/2022 Huu Con Nguyen
-connect sys/sys as sysdba;
+connect sys/MyPassword123#@localhost:1521/XE as sysdba;
 DROP USER des04 CASCADE;
 CREATE USER des04 IDENTIFIED BY des04;
 GRANT connect , resource, create view, UNLIMITED TABLESPACE TO des04;

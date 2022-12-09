@@ -1,10 +1,10 @@
 --script to create Clearwater Traders database
 -- revised 19/09/2022 Huu Con Nguyen
-connect sys/sys as sysdba;
-DROP USER nora02 CASCADE;
+connect sys/MyPassword123#@localhost:1521/XE as sysdba;
+DROP USER des02 CASCADE;
 CREATE USER des02 IDENTIFIED BY des02;
 GRANT connect , resource, create view, UNLIMITED TABLESPACE TO des02;
-connect des02/des02;
+connect des02/des02@localhost:1521/XE;
 
 DROP TABLE order_line CASCADE CONSTRAINTS;
 DROP TABLE shipment_line CASCADE CONSTRAINTS;

@@ -97,6 +97,7 @@ end;
 create or replace package body student_pkg is
     procedure check_birthdate(p_birthdate DATE, is_valid OUT BOOLEAN) AS
     begin
+        -- if (p_birthdate - sysdate) = 0 then
         if p_birthdate > sysdate then
             is_valid := FALSE;
         else

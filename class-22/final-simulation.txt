@@ -1,0 +1,434 @@
+SQL> SELECT to_char(SYSDATE, 'DD Month Year Day HH:MI:SS Am')
+  2  FROM dual;
+
+TO_CHAR(SYSDATE,'DDMONTHYEARDAYHH:MI:SSAM')                                     
+--------------------------------------------------------------------------------
+                            08 December  Twenty Twenty-Two Thursday  03:07:31 Am
+
+SQL> -- question 1
+SQL> connect scott/tiger@localhost:1521/XE;
+
+Connected.
+
+SQL> create or replace package final_q1 is
+  2      function find_emp_info (p_empno number) return VARCHAR2;
+  3      function find_emp_info (p_date date) return number;
+  4  end;
+  5  /
+
+Package created.
+
+Commit complete.
+
+SQL> create or replace package body final_q1 is
+  2      function find_emp_info (p_date date) return number is
+  3          v_years number;
+  4      begin
+  5          select floor((sysdate-p_date)/365.25) into v_years from dual;
+  6          return v_years;
+  7      end;
+  8      function find_emp_info (p_empno number) return VARCHAR2 is
+  9          v_job varchar2(9);
+  10      begin
+  11          select job into v_job from emp where empno = p_empno;
+  12          return v_job;
+  13      end;
+  14  end;
+  15  /
+
+Package Body created.
+
+Commit complete.
+
+SQL> select final_q1.find_emp_info(7369) from dual;
+
+FINAL_Q1.FIND_EMP_INFO(7369)                                                    
+--------------------------------------------------------------------------------
+                                                                           CLERK
+
+SQL> select final_q1.find_emp_info(sysdate -3650) from dual;
+
+FINAL_Q1.FIND_EMP_INFO(SYSDATE-3650)
+------------------------------------
+                                   9
+
+SQL> create or replace procedure display_emp_info (p_empno number) is
+  2      v_years number;
+  3      v_job varchar2(9);
+  4      v_salary number;
+  5      v_date date;
+  6      e_negative EXCEPTION;
+  7  begin
+  8      IF p_empno < 0 THEN
+  9          RAISE e_negative;
+  10      END IF;
+  11
+  12      select hiredate into v_date from emp where empno = p_empno;
+  13      v_years := final_q1.find_emp_info(v_date);
+  14      v_job := final_q1.find_emp_info(p_empno);
+  15      select sal into v_salary from emp where empno = p_empno;
+  16      dbms_output.put_line('Employee number '||p_empno||' is '||v_job||' with '||v_years||' years of experience, earning a salary of $'||v_salary);
+  17      EXCEPTION
+  18      WHEN NO_DATA_FOUND THEN
+  19          dbms_output.put_line('Employee number '||p_empno||' does not exist');
+  20      WHEN e_negative THEN
+  21          dbms_output.put_line('Error, employee number cannot be negative!');
+  22      WHEN OTHERS THEN
+  23          dbms_output.put_line('Error');
+  24  end;
+  25  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec display_emp_info(7369);
+
+Employee number 7369 is CLERK with 41 years of experience, earning a salary of  
+$800                                                                            
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec display_emp_info(729);
+
+Employee number 729 does not exist                                              
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec display_emp_info(-729);
+
+Error, employee number cannot be negative!                                      
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- question 2
+SQL> connect des03/des03@localhost:1521/XE;
+
+Connected.
+
+SQL> create or replace function any_ruiz_find_age (p_sid number, p_dob date) return number is
+  2      v_age number;
+  3  begin
+  4      select floor((sysdate-p_dob)/365.25) into v_age from dual;
+  5      return v_age;
+  6  end;
+
+Function created.
+
+Commit complete.
+
+SQL> create or replace procedure any_ruiz_p1 (p_sid number, p_last varchar2, p_first varchar2, p_dob date) is
+  2      e_future_birthdate EXCEPTION;
+  3      v_age number;
+  4      v_sid number;
+  5  begin
+  6      select s_id into v_sid from student where s_id = p_sid;
+  7      IF p_dob > sysdate THEN
+  8          RAISE e_future_birthdate;
+  9      END IF;
+  10      update student set s_last = p_last, s_first = p_first, s_dob = p_dob where s_id = p_sid;
+  11      commit;
+  12      dbms_output.put_line('Student updated');
+  13      v_age := any_ruiz_find_age(p_sid, p_dob);
+  14      IF v_age < 0 THEN
+  15          dbms_output.put_line('Student number '||p_sid||' is '||p_last||' '||p_first||'. not born yet.');
+  16      ELSE
+  17          dbms_output.put_line('Student number '||p_sid||' is '||p_last||' '||p_first||'. born on the '||p_dob||', '||v_age||' year old.');
+  18      END IF;
+  19      EXCEPTION
+  20      WHEN NO_DATA_FOUND THEN
+  21          insert into student(s_id, s_last, s_first,s_dob) values (p_sid, p_last, p_first, p_dob);
+  22          commit;
+  23          dbms_output.put_line('Record inserted');
+  24          v_age := any_ruiz_find_age(p_sid, p_dob);
+  25          IF v_age < 0 THEN
+  26              dbms_output.put_line('Student number '||p_sid||' is '||p_last||' '||p_first||'. Not born yet.');
+  27          ELSE
+  28              dbms_output.put_line('Student number '||p_sid||' is '||p_last||' '||p_first||'. Born on the '||p_dob||', '||v_age||' years old.');
+  29          END IF;
+  30      WHEN e_future_birthdate THEN
+  31          dbms_output.put_line('Error, birthdate cannot be in the future!');
+  32  end;
+  33  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec any_ruiz_p1(1, 'Ruiz', 'Any', '01-JAN-2014');
+
+Student updated                                                                 
+Student number 1 is Ruiz Any. born on the 01-JAN-14, 8 year old.                
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec any_ruiz_p1(1, 'Ruiz', 'Any', '01-JAN-2024');
+
+Error, birthdate cannot be in the future!                                       
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec any_ruiz_p1(7, 'Ruiz', 'Any', '14-feb-1991');
+
+Student updated                                                                 
+Student number 7 is Ruiz Any. born on the 14-FEB-91, 31 year old.               
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec any_ruiz_p1(8, 'Ruiz', 'Any', '01-JAN-2024');
+
+Error, birthdate cannot be in the future!                                       
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- question 3
+SQL> connect scott/tiger@localhost:1521/XE;
+
+Connected.
+
+SQL> create or replace procedure question_3 AS
+  2  begin
+  3      for d in (select deptno, dname, loc from dept) loop
+  4          dbms_output.put_line('---------------------------------------');
+  5          dbms_output.put_line(d.dname||' '||d.loc);
+  6          dbms_output.put_line('---------------------------------------');
+  7          for e in (select ename, job, sal, hiredate from emp where deptno = d.deptno) loop
+  8              dbms_output.put_line('- ' || e.ename||' '||e.job||' '||e.sal||' '||e.hiredate);
+  9          end loop;
+  10      end loop;
+  11  end;
+  12  /
+
+Procedure created.
+
+Commit complete.
+
+SQL> exec question_3;
+
+---------------------------------------                                         
+ACCOUNTING NEW YORK                                                             
+---------------------------------------                                         
+- KING PRESIDENT 5000 17-NOV-81                                                 
+- CLARK MANAGER 2450 09-JUN-81                                                  
+- ruiz CLERK 1300 23-JAN-82                                                     
+---------------------------------------                                         
+RESEARCH DALLAS                                                                 
+---------------------------------------                                         
+- JONES MANAGER 2975 02-APR-81                                                  
+- SCOTT ANALYST 3000 19-APR-87                                                  
+- FORD ANALYST 3000 03-DEC-81                                                   
+- SMITH CLERK 800 17-DEC-80                                                     
+- ADAMS CLERK 1100 23-MAY-87                                                    
+---------------------------------------                                         
+SALES CHICAGO                                                                   
+---------------------------------------                                         
+- BLAKE MANAGER 2850 01-MAY-81                                                  
+- ALLEN SALESMAN 1600 20-FEB-81                                                 
+- WARD SALESMAN 1250 22-FEB-81                                                  
+- MARTIN SALESMAN 1250 28-SEP-81                                                
+- TURNER SALESMAN 1500 08-SEP-81                                                
+- JAMES CLERK 950 03-DEC-81                                                     
+---------------------------------------                                         
+OPERATIONS BOSTON                                                               
+---------------------------------------                                         
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> -- question 4
+SQL> connect scott/tiger@localhost:1521/XE;
+
+Connected.
+
+SQL> -- DROP sequence emp_audit_seq;
+SQL> create sequence emp_audit_seq;
+
+Sequence created.
+
+SQL> -- DROP table audit_emp;
+SQL> create table audit_emp (audit_id NUMBER, old_empno NUMBER, old_ename VARCHAR2(10), old_hiredate DATE, old_salary NUMBER, old_job VARCHAR2(40), updating_user VARCHAR2(30), date_updated DATE);
+
+Table created.
+
+SQL> create or replace trigger audit_emp_trigger
+  2  after update on emp
+  3  for each row
+  4      begin
+  5          insert into audit_emp values (emp_audit_seq.nextval, :old.empno, :old.ename, :old.hiredate, :old.sal, :old.job, user, sysdate);
+  6      end;
+  7  /
+
+Trigger created.
+
+Commit complete.
+
+SQL> grant select, insert, update, delete on emp to vampirito;
+
+Grant succeeded.
+
+SQL> connect vampirito/vampirito@localhost:1521/XE;
+
+Connected.
+
+SQL> UPDATE scott.emp SET ename = 'ruiz'
+  2  WHERE empno = 7934;
+
+1 row updated.
+
+Commit complete.
+
+SQL> commit;
+
+Commit complete.
+
+SQL> connect scott/tiger@localhost:1521/XE;
+
+Connected.
+
+SQL> SELECT * FROM audit_emp;
+
+  AUDIT_ID  OLD_EMPNO OLD_ENAME     OLD_HIREDATE OLD_SALARY
+---------- ---------- ---------- --------------- ----------
+OLD_JOB                                  UPDATING_USER                 
+---------------------------------------- ------------------------------
+   DATE_UPDATED
+---------------
+         1       7934 ruiz             23-JAN-82       1300
+CLERK                                    VAMPIRITO                     
+      08-DEC-22
+
+SQL> -- question 5
+SQL> create or replace package any_ruiz_final is
+  2      function any_ruiz_find_age (p_sid number, p_dob date) return number;
+  3      procedure any_ruiz_p1 (p_sid number, p_last varchar2, p_first varchar2, p_dob date);
+  4      procedure question_3;
+  5  end;
+
+Package created.
+
+Commit complete.
+
+SQL> create or replace package body any_ruiz_final is
+  2      function any_ruiz_find_age (p_sid number, p_dob date) return number is
+  3          v_age number;
+  4      begin
+  5          select floor((sysdate-p_dob)/365.25) into v_age from dual;
+  6          return v_age;
+  7      end any_ruiz_find_age;
+  8      procedure any_ruiz_p1 (p_sid number, p_last varchar2, p_first varchar2, p_dob date) is
+  9          e_future_birthdate EXCEPTION;
+  10          v_age number;
+  11          v_sid number;
+  12      begin
+  13          select s_id into v_sid from student where s_id = p_sid;
+  14          IF p_dob > sysdate THEN
+  15              RAISE e_future_birthdate;
+  16          END IF;
+  17          update student set s_last = p_last, s_first = p_first, s_dob = p_dob where s_id = p_sid;
+  18          commit;
+  19          dbms_output.put_line('Student updated');
+  20          v_age := any_ruiz_find_age(p_sid, p_dob);
+  21          IF v_age < 0 THEN
+  22              dbms_output.put_line('Student number '||p_sid||' is '||p_last||' '||p_first||'. not born yet.');
+  23          ELSE
+  24              dbms_output.put_line('Student number '||p_sid||' is '||p_last||' '||p_first||'. born on the '||p_dob||', '||v_age||' year old.');
+  25          END IF;
+  26          EXCEPTION
+  27          WHEN NO_DATA_FOUND THEN
+  28              insert into student(s_id, s_last, s_first,s_dob) values (p_sid, p_last, p_first, p_dob);
+  29              -- commit;
+  30              dbms_output.put_line('Record inserted');
+  31              v_age := any_ruiz_find_age(p_sid, p_dob);
+  32              IF v_age < 0 THEN
+  33                  dbms_output.put_line('Student number '||p_sid||' is '||p_last||' '||p_first||'. Not born yet.');
+  34              ELSE
+  35                  dbms_output.put_line('Student number '||p_sid||' is '||p_last||' '||p_first||'. Born on the '||p_dob||', '||v_age||' years old.');
+  36              END IF;
+  37          WHEN e_future_birthdate THEN
+  38              dbms_output.put_line('Error, birthdate cannot be in the future!');
+  39      end any_ruiz_p1;
+  40      procedure question_3 AS
+  41      begin
+  42          for d in (select deptno, dname, loc from dept) loop
+  43              dbms_output.put_line('---------------------------------------');
+  44              dbms_output.put_line(d.dname||' '||d.loc);
+  45              dbms_output.put_line('---------------------------------------');
+  46              for e in (select ename, job, sal, hiredate from emp where deptno = d.deptno) loop
+  47                  dbms_output.put_line('- ' || e.ename||' '||e.job||' '||e.sal||' '||e.hiredate);
+  48              end loop;
+  49          end loop;
+  50      end question_3;
+  51  end;
+  52  /
+
+Package Body created.
+
+Commit complete.
+
+SQL> exec any_ruiz_final.any_ruiz_p1(1, 'Ruiz', 'Any', '01-JAN-2024');
+
+Error, birthdate cannot be in the future!                                       
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec any_ruiz_final.any_ruiz_p1(7, 'Ruiz', 'Any', '14-feb-1991');
+
+Student updated                                                                 
+Student number 7 is Ruiz Any. born on the 14-FEB-91, 31 year old.               
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> exec any_ruiz_final.question_3;
+
+---------------------------------------                                         
+ACCOUNTING NEW YORK                                                             
+---------------------------------------                                         
+- KING PRESIDENT 5000 17-NOV-81                                                 
+- CLARK MANAGER 2450 09-JUN-81                                                  
+- ruiz CLERK 1300 23-JAN-82                                                     
+---------------------------------------                                         
+RESEARCH DALLAS                                                                 
+---------------------------------------                                         
+- JONES MANAGER 2975 02-APR-81                                                  
+- SCOTT ANALYST 3000 19-APR-87                                                  
+- FORD ANALYST 3000 03-DEC-81                                                   
+- SMITH CLERK 800 17-DEC-80                                                     
+- ADAMS CLERK 1100 23-MAY-87                                                    
+---------------------------------------                                         
+SALES CHICAGO                                                                   
+---------------------------------------                                         
+- BLAKE MANAGER 2850 01-MAY-81                                                  
+- ALLEN SALESMAN 1600 20-FEB-81                                                 
+- WARD SALESMAN 1250 22-FEB-81                                                  
+- MARTIN SALESMAN 1250 28-SEP-81                                                
+- TURNER SALESMAN 1500 08-SEP-81                                                
+- JAMES CLERK 950 03-DEC-81                                                     
+---------------------------------------                                         
+OPERATIONS BOSTON                                                               
+---------------------------------------                                         
+
+PL/SQL procedure successfully completed.
+
+Commit complete.
+
+SQL> spool off;
+
